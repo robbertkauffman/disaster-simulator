@@ -1,0 +1,5 @@
+{
+    "name": "AtlasClusterName",
+    "value": "BBBE",
+    "from_secret": false
+}

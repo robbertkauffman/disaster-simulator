@@ -19,7 +19,7 @@ const ec2 = new AWS.EC2({});
 const params = {
     // DryRun: true,
     RouteTableId: "rtb-0c6e055c94067cf0e",
-    // VpcPeeringConnectionId: 'STRING_VALUE',
+    VpcPeeringConnectionId: "pcx-02a4f3024c9450624",
     DestinationCidrBlock: "192.168.240.0/21"
 };
 

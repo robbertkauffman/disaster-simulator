@@ -24,7 +24,7 @@ const params = {
     // DestinationCidrBlock: "192.168.240.0/21"
 };
 
-ec2.describeRouteTable(params, function(err, data) {
+ec2.describeRouteTables(params, function(err, data) {
     if (err) console.log(err, err.stack);
     else     console.log("Success!", data);
     });

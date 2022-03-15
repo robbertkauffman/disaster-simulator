@@ -13,15 +13,62 @@
   background-color: lightcoral;
 }
 
-.cluster-info {
-  margin-top: 20px;
+.cluster-info, .cluster-info p {
+  margin-top: 10px;
+}
+
+.cluster-info code {
+  font-size: .6em
+}
+
+.topology {
+  position: relative;
+}
+
+.topology-line {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  z-index: -1;
 }
 
 .topology .col-3 {
   text-align: center;
 }
 
+.appserver-row {
+  margin-bottom: 80px;
+}
+
 img.appserver, img.node {
-  height: 30px;
-  width: 30px;
+  height: 40px;
+  width: 40px;
+}
+
+button.simulate-partition {
+  background-color: transparent;
+  border-color: indianred;
+  color: #333;
+  position: absolute;
+  z-index: 1;
+}
+
+button.simulate-partition:hover {
+  background-color: indianred;
+  border-color: #333;
+}
+
+#simulate-partition-a {
+  top: 68px;
+  left: 350px;
+}
+
+#simulate-partition-b {
+  top: 68px;
+  left: 680px;
+}
+
+code {
+  height: 100px;
+  text-overflow: hidden;
 }

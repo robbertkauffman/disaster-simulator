@@ -59,13 +59,43 @@ function search(endpoint, htmlId) {
 }
 
 function drawTopologyLines() {
-  lineA = $("#app-a-to-region-a");
-  appA = $("#app-a").position();
-  mongoA = $("#mongo-a").position();
-  lineA.attr('x1', appA.left)
-    .attr('y1', appA.top)
-    .attr('x2', mongoA.left)
-    .attr('y2', mongoA.top);
+  new LeaderLine(
+    document.getElementById('mongo-a'),
+    document.getElementById('mongo-b'),
+    {
+      color: 'grey',
+      startPlug: 'behind',
+      endPlug: 'behind'
+    }
+  );
+  new LeaderLine(
+    document.getElementById('mongo-b'),
+    document.getElementById('mongo-c'),
+    {
+      color: 'grey',
+      startPlug: 'behind',
+      endPlug: 'behind'
+    }
+  );
+  new LeaderLine(
+    document.getElementById('app-a'),
+    document.getElementById('mongo-a'),
+    {
+      color: '#8a795d',
+      startSocket: 'bottom',
+      endSocket: 'top',
+    }
+  );
+  new LeaderLine(
+    document.getElementById('app-b'),
+    document.getElementById('mongo-b'),
+    {
+      color: '#8a795d',
+      startSocket: 'bottom',
+      endSocket: 'top',
+    }
+  );
+
 }
 
 async function fetchClusterDetails() {  

@@ -11,8 +11,6 @@ AWS.config.update({
   region: "us-west-2",
   accessKeyId: `${ak}`, 
   secretAccessKey: `${as}`
-  // accessKeyId: "", 
-  // secretAccessKey: ""
   });
 
 // Create anAmazon EC2 service client object.
@@ -20,12 +18,12 @@ const ec2 = new AWS.EC2({});
 
 const params = {
   // DryRun: true,
-  RouteTableId: "rtb-0c6e055c94067cf0e", // req'd
+  RouteTableId: "rtb-0c6e055c94067cf0e",
   DestinationCidrBlock: "192.168.240.0/21"
 };
 
 ec2.deleteRoute(params, function(err, data) {
     if (err) console.log(err, err.stack);
-    else     console.log(data);
+    else     console.log("Success!", data);
   });
 };

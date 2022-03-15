@@ -1,4 +1,4 @@
-exports = function(arg){
+exports = function() {
   SCHEME = "https";
   ATLAS_API_HOSTNAME_PATH = `cloud.mongodb.com/api/atlas/v1.0/groups/${context.values.get("AtlasGroupId")}/clusters/${context.values.get("AtlasClusterName")}`;
   

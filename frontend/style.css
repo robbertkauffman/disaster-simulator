@@ -1,5 +1,6 @@
 .header-row {
   margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 .chart-row {
@@ -14,4 +15,13 @@
 
 .cluster-info {
   margin-top: 20px;
+}
+
+.topology .col-3 {
+  text-align: center;
+}
+
+img.appserver, img.node {
+  height: 30px;
+  width: 30px;
 }

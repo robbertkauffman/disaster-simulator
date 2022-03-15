@@ -8,7 +8,18 @@ REGION_A_CONTAINER = "region-a-container";
 REGION_B_CONTAINER = "region-b-container";
 REGION_C_CONTAINER = "region-c-container";
 
+ATLAS_API_URL = "https://cloud.mongodb.com/api/atlas/v1.0/groups/622fbb4d792ac378e5188f23/clusters/BBBE";
+ATLAS_API_PUBLIC_KEY = "jvmzxzbc";
+ATLAS_API_PRIVATE_KEY = "d4f44862-766f-4b81-8322-2213150159f4";
+
+// do queries each second
 setInterval(queryAllRegions, 1000);
+
+drawTopologyLines()
+
+// init fetch
+const DigestFetch = window.DigestFetch;
+const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
 
 function queryAllRegions() {
   find(REGION_A_ENDPOINT, REGION_A_CONTAINER);
@@ -45,4 +56,24 @@ function search(endpoint, htmlId) {
     .then(data => {
       document.getElementById(htmlId + '-' + SEARCH_PATH).innerHTML = JSON.stringify(data);
   });
+}
+
+function drawTopologyLines() {
+  lineA = $("#app-a-to-region-a");
+  appA = $("#app-a").position();
+  mongoA = $("#mongo-a").position();
+  lineA.attr('x1', appA.left)
+    .attr('y1', appA.top)
+    .attr('x2', mongoA.left)
+    .attr('y2', mongoA.top);
+}
+
+async function fetchClusterDetails() {  
+  const DigestFetch = window.DigestFetch;
+  const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
+
+  const response = await client.fetch(ATLAS_API_URL, {
+    mode: 'no-cors'
+  });
+  console.log(response.json());
 }

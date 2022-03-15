@@ -8,5 +8,15 @@
         "fetch_custom_user_data": false,
         "create_user_on_auth": false,
         "disabled": false
+    },
+    {
+        "route": "/testFailover",
+        "http_method": "POST",
+        "function_name": "testFailover",
+        "validation_method": "NO_VALIDATION",
+        "respond_result": false,
+        "fetch_custom_user_data": false,
+        "create_user_on_auth": false,
+        "disabled": false
     }
 ]

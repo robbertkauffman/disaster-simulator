@@ -1,5 +1,10 @@
 [
     {
+        "name": "awsDeleteRoute",
+        "private": true,
+        "run_as_system": true
+    },
+    {
         "name": "awsV2_deleteRoute",
         "private": true,
         "run_as_system": true
@@ -9,8 +14,7 @@
         "private": false
     },
     {
-        "name": "awsDeleteRoute",
-        "private": true,
-        "run_as_system": true
+        "name": "testFailover",
+        "private": false
     }
 ]

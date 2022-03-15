@@ -8,7 +8,7 @@ const ak = context.values.get("awsKey");
 const as = context.values.get("awsSecret");
 
 AWS.config.update({
-  region: "us-west-2",
+  region: "us-east-2",
   accessKeyId: `${ak}`, 
   secretAccessKey: `${as}`
   // accessKeyId: "", 

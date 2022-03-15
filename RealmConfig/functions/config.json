@@ -1,11 +1,11 @@
 [
     {
-        "name": "awsDeleteRoute",
+        "name": "awsV2_deleteRoute",
         "private": true,
         "run_as_system": true
     },
     {
-        "name": "awsV2_deleteRoute",
+        "name": "awsDeleteRoute",
         "private": true,
         "run_as_system": true
     }

@@ -18,8 +18,8 @@ setInterval(queryAllRegions, 1000);
 drawTopologyLines()
 
 // init fetch
-const DigestFetch = window.DigestFetch;
-const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
+// const DigestFetch = window.DigestFetch;
+// const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY, { algorithm: 'MD5' });
 
 function queryAllRegions() {
   find(REGION_A_ENDPOINT, REGION_A_CONTAINER);
@@ -99,11 +99,64 @@ function drawTopologyLines() {
 }
 
 async function fetchClusterDetails() {  
-  const DigestFetch = window.DigestFetch;
-  const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
+  // const DigestFetch = window.DigestFetch;
+  // const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
+  // const response = await client.fetch(ATLAS_API_URL, {
+  //   mode: 'no-cors'
+  // });
+  // console.log(response.json());
+  // const AxiosDigestAuth = window.AxiosDigestAuth;
 
-  const response = await client.fetch(ATLAS_API_URL, {
-    mode: 'no-cors'
-  });
-  console.log(response.json());
+  // const digestAuth = new AxiosDigestAuth({
+  //   username: ATLAS_API_PUBLIC_KEY,
+  //   password: ATLAS_API_PRIVATE_KEY,
+  // });
+  
+  // const MakeARequest = async () => {
+  //   const response = await digestAuth.request({
+  //     headers: { Accept: "application/json" },
+  //     method: "GET",
+  //     url: ATLAS_API_URL,
+  //   });
+  // }
+
+  /*
+  const data = await axios.get(ATLAS_API_URL, { mode: 'no-cors'}).
+    catch(err => {
+      if (err.response.status === 401) {
+        const authDetails = err.response.headers['www-authenticate'].split(', ').map(v => v.split('='));
+
+        ++count;
+        const nonceCount = ('00000000' + count).slice(-8);
+        const cnonce = crypto.randomBytes(24).toString('hex');
+
+        const realm = authDetails[0][1].replace(/"/g, '');
+        const nonce = authDetails[2][1].replace(/"/g, '');
+
+        const md5 = str => crypto.createHash('md5').update(str).digest('hex');
+
+        const HA1 = md5(`${ATLAS_API_PUBLIC_KEY}:${realm}:${ATLAS_API_PRIVATE_KEY}`);
+        const HA2 = md5(`GET:${ATLAS_API_URL}`);
+        const response = md5(`${HA1}:${nonce}:${nonceCount}:${cnonce}:auth:${HA2}`);
+
+        const authorization = `Digest username="${publicKey}",realm="${realm}",` +
+          `nonce="${nonce}",uri="${ATLAS_API_URL}",qop="auth",algorithm="MD5",` +
+          `response="${response}",nc="${nonceCount}",cnonce="${cnonce}"`;
+
+        return axios.get(ATLAS_API_URL, { mode: 'no-cors', headers: { authorization } });
+      }
+      throw err;
+    }).
+    catch(err => {
+      throw err;
+    });
+
+  return data;*/
+  config = {
+    auth: {
+      username: ATLAS_API_PUBLIC_KEY,
+      password: ATLAS_API_PRIVATE_KEY
+    }
+  }
+  const response = await axios.get(ATLAS_API_URL, config);
 }

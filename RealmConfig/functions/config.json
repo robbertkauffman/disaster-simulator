@@ -1,5 +1,10 @@
 [
     {
+        "name": "testFailover",
+        "private": false,
+        "run_as_system": true
+    },
+    {
         "name": "awsDeleteRoute",
         "private": true,
         "run_as_system": true
@@ -11,10 +16,7 @@
     },
     {
         "name": "getClusterDetails",
-        "private": false
-    },
-    {
-        "name": "testFailover",
-        "private": false
+        "private": false,
+        "run_as_system": true
     }
 ]

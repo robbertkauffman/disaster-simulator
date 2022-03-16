@@ -1,9 +1,10 @@
 exports = function(arg) {
  
-const peerData = context.functions.execute(atlas_getNetworkPeers);
-const vpcData = context.functions.execute(atlas_getNetworkVPCs);
+const peerData = context.functions.execute('atlas_getNetworkPeers');
+const vpcData = context.functions.execute('atlas_getNetworkVPCs');
 
-console.log(JSON.stringify(peerData, null, 2));
-console.log(JSON.stringify(vpcData, null, 2));
- 
+// EJSON.parse(response.body.text());
+console.log(EJSON.parse(peerData.text())); 
+console.log(EJSON.parse(peerData.text()));
+
 };

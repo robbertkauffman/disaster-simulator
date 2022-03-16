@@ -9,15 +9,14 @@ exports = function() {
     })
     .then(response => {
       const data = EJSON.parse(response.body.text());
-      
       const myVPCs = [];
-      data.results.forEach((obj, i) => {
-        const my = {};
-        my.containerId = obj.id;
-        my.region = obj.regionName;
-        my.route = obj.atlasCidrBlock;
-        myVPCs.push(my);
-      })
+        data.results.forEach((obj, i) => {
+          const my = {};
+          my.containerId = obj.id;
+          my.region = obj.regionName;
+          my.route = obj.atlasCidrBlock;
+          myVPCs.push(my);
+        })
       // console.log(JSON.stringify(myVPCs, null, 2));
       return myVPCs;
     });

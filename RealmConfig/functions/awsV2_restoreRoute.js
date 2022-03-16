@@ -1,6 +1,7 @@
 // exports = async function(myRegion, myPeerId, myRoute){
 exports = async function(myRegion){
   
+  myRegion = "us-east-2";
   if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
     rte = "192.168.240.0/21";

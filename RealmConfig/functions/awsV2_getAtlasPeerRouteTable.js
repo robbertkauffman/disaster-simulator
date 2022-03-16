@@ -32,3 +32,11 @@ ec2.describeRouteTables(params, function(err, data) {
       return data.RouteTables[0].RouteTableId;
     });
 };
+
+/*
+NOT USED IN DEMO.   WIP.
+would be used to determine which specific table to modify from other functions.
+possible chicken/egg problem here.  
+  (this works fine if peering route is in place.  not so much otherwise.  
+  could filter on other criteria than the the connection id, but then have to source that data, which ... recursion)
+*/

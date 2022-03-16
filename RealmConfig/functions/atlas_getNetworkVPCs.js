@@ -21,3 +21,10 @@ exports = function() {
       return myVPCs;
     });
 };
+
+/* 
+  NOT CURRENTLY USED FOR DEMO
+  WIP:
+  'containerId' here is the same value as the 'id' property in the object returned by atlas_getNetworkPeers call
+  use id from other call to look up the data needed from this call (atlasCidrBlock and regionName)
+*/

@@ -14,5 +14,8 @@ exports = function(request){
 
     Try running in the console below.
   */
-  console.log(JSON.stringify(request,null,2));
+  
+  const req = JSON.parse(request);
+  console.log(req.arguments[0].query.region);
+  // console.log(JSON.stringify(request,null,2));
 };

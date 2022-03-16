@@ -19,5 +19,5 @@ exports = async function(request, response) {
       const ejson_body = EJSON.parse(response.body.text());
       return ejson_body;
     });
-    response.setBody(data);
+    response.setBody(JSON.stringify(data));
 };

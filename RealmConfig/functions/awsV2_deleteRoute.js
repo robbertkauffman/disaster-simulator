@@ -1,9 +1,9 @@
-exports = function(request, response){
+exports = function(myRegion){
 var AWS = require("aws-sdk");
 
-const myRegion = request.query;
-console.log('region is', JSON.stringify(myRegion));
-
+// const myRegion = request.query;
+// console.log('region is', JSON.stringify(myRegion));
+myRegion = "us-east-2";
   if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
     rte = "192.168.240.0/21"

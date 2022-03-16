@@ -19,7 +19,7 @@ While we have a failover button that triggers an election for a node failure, th
 
 # Detailed Application Overview
 
-![/assets/images/Workflow_diagram.jpg]
+![Workflow](/assets/images/Workflow_diagram.jpg)
 As shown from the above diagram, there will be 2 separate backend entities configured with their own EC2 instances. The App backend will be using python and leverage an existing PoV 18 (Multi-Region HA) with direct connection to Atlas. The Control Plane backend will be utilizing realm and its routing table to terminate the VPC peering connection from the app backend <-> Atlas. 
 
 
@@ -57,10 +57,10 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 ### Backend
 1. Go to your AWS Console
 2. Click Create VPC and fill out like below
-!(/assets/images/vpc_aws.png)
+![VPC in AWS](/assets/images/vpc_aws.png)
 3. Go to the *Network Access* from Atlas, click Add *Peering Connection*, then fill out the information accordingly to the VPC you created from AWS
 4. Follow the instructions from "How do I accept my peering connection in AWS?" that will show up after you create the peering connection in Atlas. Accept from AWS
 5. Follow the instructions from "How di I add Atlas' CIDR block to my route tables?". This will lead you to edit routes from AWS
 6. Do this twice for your primary region & one of your secondary region. The completed Atlas Peering will look like below
-!(/assets/images/vpc_atlas.png)
+![VPC in Atlas](/assets/images/vpc_atlas.png)
 

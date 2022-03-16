@@ -84,6 +84,11 @@ button.simulate-partition:hover {
   border-color: darkred;
 }
 
+.simulate-failure-menu button.btn-primary:disabled {
+  background-color: darkslategray;
+  border-color: darkslategray;
+}
+
 .form-check-input:checked {
   background-color: indianred;
   border-color: indianred;

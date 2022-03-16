@@ -20,8 +20,8 @@
       <div class="topology">
         <div class="simulate-failure-menu" role="group" aria-label="simulate failure menu">
           <p>Simulate failure:</p>
-          <button type="button" class="btn btn-primary">Network partition</button>
-          <button type="button" class="btn btn-primary">Atlas regional failover</button>
+          <button type="button" class="btn btn-primary create-partition" id="network-partition-button" onclick="createNetworkPartition()">Create network partition</button>
+          <button type="button" class="btn btn-primary" id="test-failover-button" onclick="testFailover()">Atlas regional failover</button>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
             <label class="form-check-label" for="flexCheckChecked">
@@ -39,7 +39,7 @@
           <div class="col-3">
             <figure class="figure">
               <img src="img/appserver.png" class="appserver" id="app-a" alt="appserver" />
-              <figcaption class="figure-caption text-center">App server — US EAST</figcaption>
+              <figcaption class="figure-caption text-center" id="app-a-caption">App server — {REGION}</figcaption>
             </figure>
             <!-- <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-a" data-bs-toggle="tooltip" 
                 data-bs-placement="top" title="Simulate network partition in this region">X</button> -->
@@ -47,7 +47,7 @@
           <div class="col-3">
             <figure class="figure">
               <img src="img/appserver.png" class="appserver" id="app-b" alt="appserver" />
-              <figcaption class="figure-caption text-center">App server — US WEST</figcaption>
+              <figcaption class="figure-caption text-center" id="app-b-caption">App server — {REGION}</figcaption>
             </figure>
             <!-- <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-b" data-bs-toggle="tooltip" 
                 data-bs-placement="top" title="Simulate network partition in this region">X</button> -->
@@ -77,14 +77,14 @@
       <div class="row chart-row">
         <div class="col">
           <!-- <h1 class="display-5"></h1> -->
-          <div class="chart">
+          <!-- <div class="chart">
             Chart placeholder
-          </div>
+          </div> -->
         </div>
       </div>
       <div class="row cluster-info">
         <div class="col">
-          <h1 class="display-6">Region A</h1>
+          <h1 class="display-6" id="region-a-log-header">{REGION}</h1>
           <p class="h6">findOne():</p>
           <p id="region-a-container-find-log" class="log"></p>
           <code id="region-a-container-find"></code>
@@ -96,7 +96,7 @@
           <code id="region-a-container-search"></code>
         </div>
         <div class="col">
-          <h1 class="display-6">Region B</h1>
+          <h1 class="display-6" id="region-b-log-header">{REGION}</h1>
           <p class="h6">findOne():</p>
           <p id="region-b-container-find-log" class="log"></p>
           <code id="region-b-container-find"></code>

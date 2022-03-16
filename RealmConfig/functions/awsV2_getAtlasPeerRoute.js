@@ -31,9 +31,8 @@ const params = {
 
 ec2.describeRouteTables(params, function(err, data) {
     if (err) console.log(err, err.stack);
-    else     // console.log("Success!", JSON.stringify(data, null, 2));
-      JSON.parse(data);
-      console.log(JSON.Stringify(data.RouteTableId));
+    else     console.log(JSON.stringify(data, null, 2));
+      console.log(JSON.Stringify(data.routeTableId));
     });
 
 };

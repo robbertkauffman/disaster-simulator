@@ -1,5 +1,15 @@
 [
     {
+        "name": "getPeeringInfo",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "testFailover",
+        "private": false,
+        "run_as_system": true
+    },
+    {
         "name": "awsDeleteRoute",
         "private": true,
         "run_as_system": true
@@ -21,16 +31,6 @@
     },
     {
         "name": "getClusterDetails",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "getPeeringInfo",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "testFailover",
         "private": false,
         "run_as_system": true
     }

@@ -24,9 +24,5 @@ exports = function() {
 };
 
 /* 
-  NOT CURRENTLY USED FOR DEMO
-  WIP:
-  need containerId and connectionId from this call
-  'containerId' here is the same value as the 'id' property in the object returned by atlas_getNetworkVPCs
-  for each connectionId, use the containerId to find the relevant data from atlas_getNetworkVPCs
+NOTE:  'containerId' here is the same value as the 'id' property in the object returned by atlas_getNetworkVPCs
 */

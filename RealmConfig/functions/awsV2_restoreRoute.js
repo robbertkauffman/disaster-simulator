@@ -41,9 +41,3 @@ ec2.createRoute(params, function(err, data) {
     else     console.log("Success!", data);
     });
 };
-
-/* 
-ACTIVELY NEEDED FOR DEMO.  
-Needs improvement (too much hard coding) but leaving as-is for demo.  
-Supply region in "us-west-2" format as parameter
-*/

@@ -15,5 +15,6 @@ exports = function(request){
     Try running in the console below.
   */
   const { arg1, arg2 } = request.query;
-  return arg2
+  console.log('hi!', JSON.stringify(arg2));
+  return arg2;
 };

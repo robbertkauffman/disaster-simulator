@@ -14,8 +14,6 @@ exports = function(request){
 
     Try running in the console below.
   */
-  
-  const req = JSON.stringify(request);
-  console.log(req.query,null,2);
-  console.log(req,null,2);
+  const { arg1, arg2 } = request.query;
+  return arg2
 };

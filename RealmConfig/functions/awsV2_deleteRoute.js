@@ -1,5 +1,8 @@
-exports = function(myRegion){
+exports = function(request){
 var AWS = require("aws-sdk");
+
+const myRegion = request.query;
+console.log('region is', JSON.stringify(myRegion));
 
   if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
@@ -11,7 +14,6 @@ var AWS = require("aws-sdk");
     rte = "192.168.248.0/21"
   }
   
-
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#deleteRoute-property
 
 const ak = context.values.get("awsKey");

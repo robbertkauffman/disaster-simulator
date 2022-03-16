@@ -35,12 +35,11 @@ def home():
 @app.route('/find', methods = ['GET'])
 def perform_reads():
     restaurant_record=collection.find_one({},{"_id":0})
-    print(restaurant_record)
     return restaurant_record
 
 @app.route('/insert', methods = ['GET'])
 def perform_inserts():
-    collection.insert_one(
+    insert_record=collection.insert_one(
             {
             "address": {
             "building": "998814",
@@ -53,7 +52,7 @@ def perform_inserts():
         "grade": "Not Yet Graded",
         "score": 20
     })
-    return 'true'
+    return str(insert_record.inserted_id)
 
 @app.route('/search', methods = ['GET'])
 def search():
@@ -78,11 +77,10 @@ def search():
     json_docs = []
 
     search_record=collection.aggregate(pipeline)
-    print(search_record)
     for doc in search_record:
         json_doc = json.dumps(doc, default=json_util.default)
         json_docs.append(json_doc)
     return json_doc
 
 if __name__ == '__main__':
-     app.run(host='0.0.0.0')
+     app.run(debug=True,host='0.0.0.0')

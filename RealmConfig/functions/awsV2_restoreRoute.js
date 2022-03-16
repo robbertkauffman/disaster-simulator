@@ -1,10 +1,16 @@
-exports = function(myRegion, myPeerId, myRoute){
+exports = async function(myRegion, myPeerId, myRoute){
   
 /*
   Inputs: AWS Region, AWS Peer ID, Atlas CIDR Block
   Outputs: 
   Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#deleteRoute-property
 */
+
+const myPeers = await context.functions.execute('atlas_getNetworkPeers');
+
+myPeers.forEach((obj,i) => {
+  console.log(obj,i);
+})
 
 const myRouteTableId = context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
  
@@ -24,7 +30,7 @@ const ec2 = new AWS.EC2({});
 
 const params = {
     // DryRun: true,
-    RouteTableId: myRouteTableId,
+    RouteTableId: myRoute,
     DestinationCidrBlock: myRoute
 };
 

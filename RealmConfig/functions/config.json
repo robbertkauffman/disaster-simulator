@@ -5,27 +5,17 @@
         "run_as_system": true
     },
     {
-        "name": "testEndpoint",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "atlasProcesses",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "awsV2_getAtlasPeerRoute",
+        "name": "atlas_getAWSRouting",
         "private": true,
         "run_as_system": true
     },
     {
-        "name": "testFailover",
-        "private": false,
+        "name": "awsV2_deleteRoute",
+        "private": true,
         "run_as_system": true
     },
     {
-        "name": "atlas_getAWSRouting",
+        "name": "awsV2_getAtlasPeerRouteTable",
         "private": true,
         "run_as_system": true
     },
@@ -40,17 +30,27 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_getAtlasPeerRouteTable",
-        "private": true,
+        "name": "testEndpoint",
+        "private": false,
         "run_as_system": true
     },
     {
-        "name": "awsV2_deleteRoute",
-        "private": true,
+        "name": "testFailover",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "atlasProcesses",
+        "private": false,
         "run_as_system": true
     },
     {
         "name": "atlas_getNetworkVPCs",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "awsV2_getAtlasPeerRoute",
         "private": true,
         "run_as_system": true
     }

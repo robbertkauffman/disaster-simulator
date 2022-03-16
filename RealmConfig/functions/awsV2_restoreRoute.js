@@ -1,12 +1,17 @@
-exports = async function(myRegion, myPeerId, myRoute){
+// exports = async function(myRegion, myPeerId, myRoute){
+exports = async function(myRegion){
   
-/*
-  Inputs: AWS Region, AWS Peer ID, Atlas CIDR Block
-  Outputs: 
-  Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#deleteRoute-property
-*/
+  if (myRegion === "us-east-2") {
+    tbl = "rtb-0c6e055c94067cf0e";
+    rte = "192.168.240.0/21"
+  }
+  
+  if (myRegion === "us-west-2") {
+    tbl = "rtb-0ad558083560c839e";
+    rte = "192.168.248.0/21"
+  }
 
-const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
+// const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
  
 var AWS = require("aws-sdk");
 
@@ -24,8 +29,8 @@ const ec2 = new AWS.EC2({});
 
 const params = {
     // DryRun: true,
-    RouteTableId: myRouteTableId,
-    DestinationCidrBlock: myRoute
+    RouteTableId: tbl,
+    DestinationCidrBlock: rte
 };
 
 ec2.createRoute(params, function(err, data) {

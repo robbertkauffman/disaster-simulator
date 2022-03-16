@@ -9,7 +9,7 @@ exports = function() {
       "digestAuth": true
     })
     .then(response => {
-      const ejson_body = EJSON.parse(response.body.text());
+      const ejson_body = EJSON.parse(response.body.text().results);
       return ejson_body;
     });
 };

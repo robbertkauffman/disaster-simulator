@@ -54,11 +54,13 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 3. Create a New App from the Realm UI
     - Enable Hosting via Realm -> Manage -> Deployment
     - Generate an API Key for use by Realm via Project -> Access Manager -> Create API Key
+    - Update the `clusterName` in `/RealmConfig/data_sources/mongodb-atlas` to be your cluster's name
     - Install the Realm-CLI to your localhost
-    - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmExport` directory 
-    - Confirm API key authentication is enabled. 
+    - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmConfig` directory 
     
 ### Front End
+
+Using Chrome, open `/fontend/index.html`
 
 ### Backend
 1. Go to your AWS Console

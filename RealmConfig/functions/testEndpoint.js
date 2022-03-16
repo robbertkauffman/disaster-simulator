@@ -1,4 +1,4 @@
-exports = async function(request){
+exports = function(request){
   /*
     Accessing application's values:
     var x = context.values.get("value_name");
@@ -14,7 +14,7 @@ exports = async function(request){
 
     Try running in the console below.
   */
-  const { arg1, arg2 } = await request.query;
+  const { arg1, arg2 } = request.query;
   console.log('hi!', JSON.stringify(arg2));
   return arg2;
 };

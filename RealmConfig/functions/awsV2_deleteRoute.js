@@ -1,24 +1,26 @@
-exports = function(myRegion){
+exports = function(request){
 var AWS = require("aws-sdk");
 
-  if (myRegion === "us-east-2") {
+const r = request.query;
+console.log('region is', r);
+
+  if (r === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
     rte = "192.168.240.0/21"
   }
   
-  if (myRegion === "us-west-2") {
+  if (r === "us-west-2") {
     tbl = "rtb-0ad558083560c839e";
     rte = "192.168.248.0/21"
   }
   
-
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#deleteRoute-property
 
 const ak = context.values.get("awsKey");
 const as = context.values.get("awsSecret");
 
 AWS.config.update({
-  region: myRegion,
+  region: r,
   accessKeyId: `${ak}`, 
   secretAccessKey: `${as}`
   });

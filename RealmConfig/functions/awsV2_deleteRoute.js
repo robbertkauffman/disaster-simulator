@@ -2,7 +2,7 @@ exports = function(request, response){
 var AWS = require("aws-sdk");
 
 const myRegion = request.query;
-console.log('region is', JSON.stringify(myRegion));
+// console.log('region is', JSON.stringify(myRegion));
 
   if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";

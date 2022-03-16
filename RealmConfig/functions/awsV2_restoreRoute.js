@@ -6,12 +6,13 @@ exports = async function(myRegion, myPeerId, myRoute){
   Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#deleteRoute-property
 */
 
+/*
 const myPeers = await context.functions.execute('atlas_getNetworkPeers');
 
 myPeers.forEach((obj,i) => {
-  console.log(JSON.stringify(obj,null,2));
+  console.log(obj);
 })
-
+*/
 const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
  
 var AWS = require("aws-sdk");

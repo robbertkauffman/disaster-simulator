@@ -5,7 +5,7 @@ const myVPCs = await context.functions.execute('atlas_getNetworkVPCs');
 
 function mergeArrayObjects(arr1,arr2){
   return arr1.map((item,i)=>{
-     if(item.id === arr2[i].id){
+     if(item.containerId === arr2[i].containerId){
         return Object.assign({},item,arr2[i])
      }
   })

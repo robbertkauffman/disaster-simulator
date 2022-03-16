@@ -12,7 +12,7 @@ exports = async function(request, response) {
       "headers": {
         'Content-Type': ['application/json'],
         'Access-Control-Request-Headers': ['*'],
-        'api-key': ['YEUUfqrDqmzTBgEWsfHWbOxm0KH8TgUsyFC1Rvy8T9mnQArhfWefAR3DRSvhYyE']
+        'api-key': ['YEUUfqrDqmzTBgEWsfHWbOxm0KH8TgUsyFC1Rvy8T9mnQArhfWefAR3DRSvhYyED']
       }
     })
     .then(response => {

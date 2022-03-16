@@ -1,5 +1,7 @@
-exports = function(arg) {
+exports = async function(arg) {
  
-console.log(context.functions.execute('atlas_getNetworkPeers'));
+const foo = await context.functions.execute('atlas_getNetworkPeers');
+
+console.log(JSON.stringify(foo, null, 2));
 
 };

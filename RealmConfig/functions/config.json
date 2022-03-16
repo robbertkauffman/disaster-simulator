@@ -41,7 +41,7 @@
     },
     {
         "name": "awsV2_deleteRoute",
-        "private": true,
+        "private": false,
         "run_as_system": true
     },
     {

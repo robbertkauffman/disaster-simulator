@@ -73,7 +73,10 @@ Using Chrome, open `/fontend/index.html`
 
 #### Backend Application
 1. git clone the repo in both AWS VMs
-2. On first AWS VM, cd mdb-sa-hackathon-202203-t9/backend
+2. On first AWS VM, 
+```
+cd mdb-sa-hackathon-202203-t9/backend
+```
 3. Update config.yml with the Port on which the app should work (default 5000), Atlas CONNECTION_STRING, DB=Database, and COLLECTION 
 4. Run the application with nohup backend.py &
 5. On AWS, add an inbound rule to the security group to allow traffic to the port on which the app is running

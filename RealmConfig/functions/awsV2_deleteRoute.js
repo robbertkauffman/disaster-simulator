@@ -1,7 +1,7 @@
 exports = function(request){
 var AWS = require("aws-sdk");
 
-const region = request.query;
+const region = JSON.stringify(request.query);
 console.log('region is', region);
 
   if (region === "us-east-2") {

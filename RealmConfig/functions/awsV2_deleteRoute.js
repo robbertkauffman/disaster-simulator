@@ -1,4 +1,4 @@
-exports = function(request){
+exports = function(request, response){
 var AWS = require("aws-sdk");
 
 const myRegion = request.query;

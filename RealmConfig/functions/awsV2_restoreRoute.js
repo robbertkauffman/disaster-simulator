@@ -3,12 +3,14 @@ exports = async function(myRegion){
   
   if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
-    rte = "192.168.240.0/21"
+    rte = "192.168.240.0/21";
+    peerId = "pcx-02a4f3024c9450624";
   }
   
   if (myRegion === "us-west-2") {
     tbl = "rtb-0ad558083560c839e";
-    rte = "192.168.248.0/21"
+    rte = "192.168.248.0/21";
+    peerId = "pcx-096103b8cc0d56835"
   }
 
 // const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
@@ -30,7 +32,8 @@ const ec2 = new AWS.EC2({});
 const params = {
     // DryRun: true,
     RouteTableId: tbl,
-    DestinationCidrBlock: rte
+    DestinationCidrBlock: rte,
+    VpcPeeringConnectionId: peerId
 };
 
 ec2.createRoute(params, function(err, data) {

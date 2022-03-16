@@ -5,8 +5,28 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_getAtlasPeerRouteTable",
+        "name": "awsV2_getAtlasPeerRoute",
         "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "awsV2_restoreRoute",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testEndpoint",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "getClusterDetails",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "testFailover",
+        "private": false,
         "run_as_system": true
     },
     {
@@ -15,7 +35,7 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_restoreRoute",
+        "name": "atlas_getAWSRouting",
         "private": true,
         "run_as_system": true
     },
@@ -30,28 +50,13 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_getAtlasPeerRoute",
+        "name": "awsV2_getAtlasPeerRouteTable",
         "private": true,
         "run_as_system": true
     },
     {
-        "name": "getClusterDetails",
+        "name": "createClusterMetric",
         "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "testEndpoint",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "testFailover",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "atlas_getAWSRouting",
-        "private": true,
         "run_as_system": true
     }
 ]

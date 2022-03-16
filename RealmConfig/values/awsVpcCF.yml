@@ -1,0 +1,43 @@
+Description: This CloudFormation template deploys a basic VPC / Network. 
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value:  !Join ['', [!Ref "AWS::StackName", "-VPC" ]]  
+  # # Below are nice to have to get it automated all the way however due to lack of time, this will be done manually for the demo
+  # PublicSubnetA:
+  #     Type: AWS::EC2::Subnet
+  #     Properties:
+  #       VpcId: !Ref VPC
+  #       CidrBlock: 10.0.10.0/20
+  #       AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the first AZ in the list       
+  #       Tags:
+  #       - Key: Name
+  #         Value: !Sub ${AWS::StackName}-Public-A
+  # InternetGateway:
+  #   Type: AWS::EC2::InternetGateway
+  #   DependsOn: VPC
+  # AttachGateway:
+  #   Type: AWS::EC2::VPCGatewayAttachment
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     InternetGatewayId: !Ref InternetGateway
+  # PublicRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     Tags:
+  #     - Key: Name
+  #       Value: Public
+  # PublicRoute1:   # Public route table has direct routing to IGW:
+  #   Type: AWS::EC2::Route
+  #   DependsOn: AttachGateway
+  #   Properties:
+  #     RouteTableId: !Ref PublicRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     GatewayId: !Ref InternetGateway  

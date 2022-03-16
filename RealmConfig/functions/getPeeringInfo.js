@@ -1,6 +1,7 @@
 exports = function() {
   SCHEME = "https";
-  ATLAS_API_HOSTNAME_PATH = `cloud.mongodb.com/api/atlas/v1.0/groups/${context.values.get("AtlasGroupId")}/containers/`;
+  // https://docs.atlas.mongodb.com/reference/api/vpc-get-connections-list/
+  ATLAS_API_HOSTNAME_PATH = `cloud.mongodb.com/api/atlas/v1.0/groups/${context.values.get("AtlasGroupId")}/peers/`;
   
   return context.http
     .get({
@@ -12,3 +13,4 @@ exports = function() {
       return ejson_body;
     });
 };
+

@@ -1,15 +1,15 @@
 exports = function(request){
 var AWS = require("aws-sdk");
 
-const r = request.query;
-console.log('region is', r);
+const myRegion = request.query;
+console.log('region is', JSON.stringify(myRegion));
 
-  if (r === "us-east-2") {
+  if (myRegion === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
     rte = "192.168.240.0/21"
   }
   
-  if (r === "us-west-2") {
+  if (myRegion === "us-west-2") {
     tbl = "rtb-0ad558083560c839e";
     rte = "192.168.248.0/21"
   }
@@ -20,7 +20,7 @@ const ak = context.values.get("awsKey");
 const as = context.values.get("awsSecret");
 
 AWS.config.update({
-  region: r,
+  region: myRegion,
   accessKeyId: `${ak}`, 
   secretAccessKey: `${as}`
   });

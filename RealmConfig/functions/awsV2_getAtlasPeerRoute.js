@@ -1,8 +1,13 @@
 exports = function(arg){
+  
+/* 
+  Should really have named this awsV2_getAtlasPeerRouteTable
+  Inputs:  AWS Region, VPC Peering 
+  Output:  routeTableId
+  Reference:  https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#describeRouteTables-property
+*/
 
 var AWS = require("aws-sdk");
-
-// https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#describeRouteTables-property
 
 const ak = context.values.get("awsKey");
 const as = context.values.get("awsSecret");
@@ -26,7 +31,9 @@ const params = {
 
 ec2.describeRouteTables(params, function(err, data) {
     if (err) console.log(err, err.stack);
-    else     console.log("Success!", JSON.stringify(data, null, 2));
+    else     // console.log("Success!", JSON.stringify(data, null, 2));
+      JSON.parse(data);
+      console.log(data.RouteTables.Associations.RouteTableId);
     });
 
 };

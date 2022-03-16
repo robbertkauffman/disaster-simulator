@@ -40,8 +40,7 @@ As shown from the above diagram, there will be 2 separate backend entities confi
     - App/CP Frontend
     - Realm functions
 - Timothy Marland
-    - Realm, Realm Sync
-    - Mobile (Swift)
+    - Mobile Application (Swift, application API, MongoDB Data API)
 - Marianne Myers
     - App/CP Frontend
     - Realm functions
@@ -72,3 +71,11 @@ Using Chrome, open `/fontend/index.html`
 6. Do this twice for your primary region & one of your secondary region. The completed Atlas Peering will look like below
 ![VPC in Atlas](/assets/images/vpc_atlas.png)
 
+### Mobile Application
+
+Update the variables in SwiftDataApp.
+
+1. Data API URL
+2. Data API Key
+3. Data API Search parameters
+4. Application API URL

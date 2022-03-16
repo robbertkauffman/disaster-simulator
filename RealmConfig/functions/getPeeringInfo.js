@@ -10,7 +10,7 @@ exports = function() {
     })
     .then(response => {
       const ejson_body = EJSON.parse(response.body.text());
-      return ejson_body;
+      return ejson_body.results;
     });
 };
 

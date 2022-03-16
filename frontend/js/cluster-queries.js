@@ -17,8 +17,10 @@ CLUSTER_DETAILS_PATH = "/getClusterDetails";
 TEST_FAILOVER_PATH = "/testFailover";
 ATLAS_PROCESSES_PATH = "/atlasProcesses";
 CREATE_NETWORK_PARTITION_PATH = "/createNetworkPartition";
+RESTORE_NETWORK = "/restoreNetwork";
 
 let appAToMongoLine;
+let animationInterval;
 
 // do queries each second
 setInterval(queryAllRegions, 1000);
@@ -28,6 +30,7 @@ fetchClusterDetails();
 setAppRegions();
 
 function queryAllRegions() {
+  getAtlasRegionsAndTypes();
   find(REGION_A_ENDPOINT, REGION_A_CONTAINER);
   insertDocument(REGION_A_ENDPOINT, REGION_A_CONTAINER);
   search(REGION_A_ENDPOINT, REGION_A_CONTAINER);
@@ -51,9 +54,22 @@ function logRequest(success, latency, logElmId) {
   document.getElementById(logElmId).innerHTML = logText;
 }
 
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = 8000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+  return response;
+}
+
 function find(endpoint, htmlId) {
   startTime = Date.now();
-  fetch(endpoint + '/' + FIND_PATH)
+  fetchWithTimeout(endpoint + '/' + FIND_PATH, { timeout: 1000 })
     .then(response => response.json())
     .then(data => {
       endTime = Date.now();
@@ -70,7 +86,7 @@ function find(endpoint, htmlId) {
 
 function insertDocument(endpoint, htmlId) {
   startTime = Date.now();
-  fetch(endpoint + '/' + INSERT_PATH)
+  fetchWithTimeout(endpoint + '/' + INSERT_PATH, { timeout: 1000 })
     .then(response => response.text())
     .then(data => {
       endTime = Date.now()
@@ -87,7 +103,7 @@ function insertDocument(endpoint, htmlId) {
 
 function search(endpoint, htmlId) {
   startTime = Date.now();
-  fetch(endpoint + '/' + SEARCH_PATH)
+  fetchWithTimeout(endpoint + '/' + SEARCH_PATH, { timeout: 1000 })
     .then(response => response.json())
     .then(data => {
       endTime = Date.now()
@@ -142,7 +158,7 @@ function drawTopologyLines() {
 }
 
 function showNetworkPartition(line) {
-  setInterval(() => {
+  animationInterval = setInterval(() => {
     if (line.color === 'white') {
       line.color = '#8a795d';
       line.middleLabel = LeaderLine.captionLabel('X', {color: 'indianred', outlineColor: 'white', fontSize: '2em', offset: [50, 50]});;
@@ -151,6 +167,12 @@ function showNetworkPartition(line) {
       line.middleLabel = '';
     }
   }, 1000);
+}
+
+function resetTopologyLine(line) {
+  clearInterval(animationInterval);
+  line.color = '#8a795d';
+  line.middleLabel = '';
 }
 
 async function fetchClusterDetails() {  
@@ -177,10 +199,18 @@ function setAppRegions() {
 }
 
 function replaceRegionCaption(htmlId, region) {
+  replaceCaption(htmlId, region, "{REGION}");
+}
+
+function replaceTypeCaption(htmlId, region) {
+  replaceCaption(htmlId, region, "{TYPE}");
+}
+
+function replaceCaption(htmlId, region, replaceStr) {
   elm = document.getElementById(htmlId);
   if (elm) {
     currCaption = elm.innerHTML;
-    elm.innerHTML = currCaption.replace("{REGION}", region);
+    elm.innerHTML = currCaption.replace(replaceStr, region);
   }
 }
 
@@ -206,7 +236,13 @@ function enableTestFailover(buttonElm) {
 }
 
 async function createNetworkPartition() {
-  clusterDetails = await fetch(REALM_BASE_URL + TEST_FAILOVER_PATH, { method: 'POST' })
+  let url;
+  if (document.getElementById("network-partition-button").className.indexOf("create-partition") !== -1) {
+    url = REALM_BASE_URL + CREATE_NETWORK_PARTITION_PATH;
+  } else {
+    url = REALM_BASE_URL + RESTORE_NETWORK;
+  }
+  clusterDetails = await fetch(url)
   .then(response => response.text())
   .then(data => {
     console.log(data);
@@ -218,6 +254,7 @@ async function createNetworkPartition() {
         showNetworkPartition(appAToMongoLine);
       } else {
         buttonElm.innerHTML = "Restoring network connectivity...";
+        resetTopologyLine(appAToMongoLine);
       }
     }
     setTimeout(() => enableCreateNetworkPartition(buttonElm), 2000);
@@ -236,3 +273,26 @@ function enableCreateNetworkPartition(buttonElm) {
     buttonElm.className = buttonElm.className.replace("restore-partition", "create-partition")
   }
 }
+
+async function getAtlasRegionsAndTypes() {
+  DB_HELLO_URL = "/hello";
+  dbHello = await fetch(REGION_A_ENDPOINT + DB_HELLO_URL)
+    .then(response => response.json())
+    .then(data => {
+      return data;
+  }).catch(
+    e => console.log(`Fetching output of db hello command: ${e}`)
+  );
+  
+  if (dbHello && dbHello.hosts) {
+    primaryIdx = dbHello.hosts.indexOf(dbHello.primary);
+    // reset all nodes to secondary
+    for (let i = 1; i < 4; i++) {
+      replaceTypeCaption("mongo-" + i + "-caption", "Secondary");
+      document.getElementById("mongo-" + i).src = "img/secondary-active.png";
+    }
+    replaceTypeCaption("mongo-" + (primaryIdx + 1) + "-caption", "Primary");
+    document.getElementById("mongo-" + (primaryIdx + 1)).src = "img/primary-active.png";
+  }
+}
+

@@ -11,7 +11,7 @@
 # Overview
 
 While rare, cloud provider's outages do happen and sometimes it can have detrimental impact on their users from a whole region. Just in late 2021 AWS had [US-WEST-1, US-WEST-2, and US-EAST-1 had netowrk problems that lasted hours](https://awsmaniac.com/aws-outages/). In these situations, the usual replica set deployment that is resilient to an availability zone fail will not be sufficient. MongoDB Atlas has the ability to not only go regional (partial or full) outage, but also a full cloud provider outage if it ever occurs. This project will demonstrate if any kinf of diaster were to struck these nodes in a region, how Atlas will be able to withstand such an event.
-![/assets/images/atlas_outage.png]
+!(/assets/images/atlas_outage.png)
 
 # Justification
 
@@ -57,10 +57,10 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 ### Backend
 1. Go to your AWS Console
 2. Click Create VPC and fill out like below
-![/assets/images/vpc_aws.png]
+!(/assets/images/vpc_aws.png)
 3. Go to the *Network Access* from Atlas, click Add *Peering Connection*, then fill out the information accordingly to the VPC you created from AWS
 4. Follow the instructions from "How do I accept my peering connection in AWS?" that will show up after you create the peering connection in Atlas. Accept from AWS
 5. Follow the instructions from "How di I add Atlas' CIDR block to my route tables?". This will lead you to edit routes from AWS
 6. Do this twice for your primary region & one of your secondary region. The completed Atlas Peering will look like below
-![/assets/images/vpc_atlas.png]
+!(/assets/images/vpc_atlas.png)
 

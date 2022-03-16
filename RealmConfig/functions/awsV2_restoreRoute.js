@@ -12,7 +12,7 @@ myPeers.forEach((obj,i) => {
   console.log(obj,i);
 })
 
-const myRouteTableId = context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
+const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);
  
 var AWS = require("aws-sdk");
 

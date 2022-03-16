@@ -9,7 +9,15 @@ exports = function() {
       "digestAuth": true
     })
     .then(response => {
-      const ejson_body = EJSON.parse(response.body.text());
-      return ejson_body;
+      const data = EJSON.parse(response.body.text());
+      
+      const myPeers = [];
+      data.results.forEach((obj, i) => {
+        const my = {};
+        my.containerId = obj.containerId;
+        my.connectionId = obj.connectionId;
+        myPeers.push(my);
+      });
+      console.log(JSON.stringify(myPeers, null, 2));
     });
 };

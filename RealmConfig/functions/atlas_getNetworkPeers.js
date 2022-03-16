@@ -19,5 +19,6 @@ exports = function() {
         myPeers.push(my);
       });
       console.log(JSON.stringify(myPeers, null, 2));
+      return myPeers;
     });
 };

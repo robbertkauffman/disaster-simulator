@@ -1,7 +1,17 @@
 [
     {
-        "name": "atlas_getAWSRouting",
+        "name": "awsV2_getAtlasPeerRoute",
         "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testEndpoint",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "atlasProcesses",
+        "private": false,
         "run_as_system": true
     },
     {
@@ -15,18 +25,8 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_getAtlasPeerRoute",
+        "name": "atlas_getAWSRouting",
         "private": true,
-        "run_as_system": true
-    },
-    {
-        "name": "awsV2_getAtlasPeerRouteTable",
-        "private": true,
-        "run_as_system": true
-    },
-    {
-        "name": "atlasProcesses",
-        "private": false,
         "run_as_system": true
     },
     {
@@ -40,13 +40,13 @@
         "run_as_system": true
     },
     {
-        "name": "testEndpoint",
+        "name": "getClusterDetails",
         "private": false,
         "run_as_system": true
     },
     {
-        "name": "getClusterDetails",
-        "private": false,
+        "name": "awsV2_getAtlasPeerRouteTable",
+        "private": true,
         "run_as_system": true
     },
     {

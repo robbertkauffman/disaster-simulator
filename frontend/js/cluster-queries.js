@@ -1,7 +1,7 @@
-// REGION_A_ENDPOINT = "http://ec2-3-135-221-191.us-east-2.compute.amazonaws.com:5000";
-REGION_A_ENDPOINT = "http://127.0.0.1:5001";
-// REGION_B_ENDPOINT = "http://ec2-54-71-127-55.us-west-2.compute.amazonaws.com:5000";
-REGION_B_ENDPOINT = "http://127.0.0.1:5002";
+REGION_A_ENDPOINT = "http://ec2-3-135-221-191.us-east-2.compute.amazonaws.com:5000";
+// REGION_A_ENDPOINT = "http://127.0.0.1:5001";
+REGION_B_ENDPOINT = "http://ec2-54-71-127-55.us-west-2.compute.amazonaws.com:5000";
+// REGION_B_ENDPOINT = "http://127.0.0.1:5002";
 // REGION_C_ENDPOINT = "http://127.0.0.1:5003";
 REGION_A_NAME = "US_EAST_2";
 REGION_B_NAME = "US_WEST_1";
@@ -17,6 +17,8 @@ CLUSTER_DETAILS_PATH = "/getClusterDetails";
 TEST_FAILOVER_PATH = "/testFailover";
 ATLAS_PROCESSES_PATH = "/atlasProcesses";
 CREATE_NETWORK_PARTITION_PATH = "/createNetworkPartition";
+
+let appAToMongoLine;
 
 // do queries each second
 setInterval(queryAllRegions, 1000);
@@ -69,12 +71,12 @@ function find(endpoint, htmlId) {
 function insertDocument(endpoint, htmlId) {
   startTime = Date.now();
   fetch(endpoint + '/' + INSERT_PATH)
-    .then(response => response.json())
+    .then(response => response.text())
     .then(data => {
       endTime = Date.now()
       logElmId = htmlId + '-' + INSERT_PATH + '-log';
       logRequest(true, endTime - startTime, logElmId);
-      document.getElementById(htmlId + '-' + INSERT_PATH).innerHTML = JSON.stringify(data);
+      document.getElementById(htmlId + '-' + INSERT_PATH).innerHTML = `Inserted document with ID: ${data}`;
     }).catch(e => {
       endTime = Date.now();
       logElmId = htmlId + '-' + INSERT_PATH + '-log';
@@ -82,7 +84,6 @@ function insertDocument(endpoint, htmlId) {
       document.getElementById(htmlId + '-' + INSERT_PATH).innerHTML = e;
     });
 }
-
 
 function search(endpoint, htmlId) {
   startTime = Date.now();
@@ -120,7 +121,7 @@ function drawTopologyLines() {
       endPlug: 'behind'
     }
   );
-  new LeaderLine(
+  appAToMongoLine = new LeaderLine(
     document.getElementById('app-a'),
     document.getElementById('mongo-1'),
     {
@@ -138,6 +139,18 @@ function drawTopologyLines() {
       endSocket: 'top',
     }
   );
+}
+
+function showNetworkPartition(line) {
+  setInterval(() => {
+    if (line.color === 'white') {
+      line.color = '#8a795d';
+      line.middleLabel = LeaderLine.captionLabel('X', {color: 'indianred', outlineColor: 'white', fontSize: '2em', offset: [50, 50]});;
+    } else {
+      line.color = 'white';
+      line.middleLabel = '';
+    }
+  }, 1000);
 }
 
 async function fetchClusterDetails() {  
@@ -202,6 +215,7 @@ async function createNetworkPartition() {
       buttonElm.disabled = true;
       if (buttonElm.className.indexOf("create-partition") !== -1) {
         buttonElm.innerHTML = "Creating network partition...";
+        showNetworkPartition(appAToMongoLine);
       } else {
         buttonElm.innerHTML = "Restoring network connectivity...";
       }

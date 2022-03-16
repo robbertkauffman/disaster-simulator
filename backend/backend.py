@@ -8,12 +8,14 @@ import datetime
 import pymongo
 from flask import Flask
 from flask import jsonify
+from flask_cors import CORS
 from bson import json_util
 import json
 import yaml
 
 app = Flask(__name__)
 
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 with open("config.yml", "r") as ymlfile:
     cfg = yaml.safe_load(ymlfile)
@@ -30,7 +32,7 @@ with open("config.yml", "r") as ymlfile:
 def home():
     return 'Hello World'
 
-@app.route('/read', methods = ['GET'])
+@app.route('/find', methods = ['GET'])
 def perform_reads():
     restaurant_record=collection.find_one({},{"_id":0})
     print(restaurant_record)

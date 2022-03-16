@@ -8,6 +8,7 @@ exports = function() {
       //"url": `${SCHEME}://${context.values.get("AtlasAPIKeyPublic")}:${context.values.get("AtlasAPIKeyPrivate")}@${ATLAS_API_HOSTNAME_PATH}`,
       "url": `${SCHEME}://${DATA_API_HOSTNAME_PATH}`,
       "body": context.http.body,
+      encodeBodyAsJSON: true,
       "headers": {
         'Content-Type': ['application/json'],
         'Access-Control-Request-Headers': ['*'],

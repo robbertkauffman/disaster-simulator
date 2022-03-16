@@ -18,7 +18,7 @@ exports = function() {
         my.connectionId = obj.connectionId;
         myPeers.push(my);
       });
-      console.log(JSON.stringify(myPeers, null, 2));
+      // console.log(JSON.stringify(myPeers, null, 2));
       return myPeers;
     });
 };

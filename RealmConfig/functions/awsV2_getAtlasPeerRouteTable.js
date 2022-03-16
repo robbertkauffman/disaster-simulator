@@ -22,7 +22,7 @@ const ec2 = new AWS.EC2({});
 
 const params = {
     // DryRun: true,
-    Filters: [{ Name: "route.vpc-peering-connection-id", Values: [ myPeerId ]} ],
+    // Filters: [{ Name: "route.vpc-peering-connection-id", Values: [ myPeerId ]} ],
 };
 
 ec2.describeRouteTables(params, function(err, data) {

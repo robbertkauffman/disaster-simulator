@@ -22,3 +22,7 @@ exports = function() {
       return myPeers;
     });
 };
+
+/* 
+NOTE:  'containerId' here is the same value as the 'id' property in the object returned by atlas_getNetworkVPCs
+*/

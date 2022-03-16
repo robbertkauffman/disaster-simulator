@@ -8,7 +8,17 @@ exports = function() {
       "digestAuth": true
     })
     .then(response => {
-      const ejson_body = EJSON.parse(response.body.text());
-      return ejson_body;
+      const data = EJSON.parse(response.body.text());
+      
+      const myVPCs = [];
+      data.results.forEach((obj, i) => {
+        const my = {};
+        my.containerId = obj.id;
+        my.region = obj.regionName;
+        my.route = obj.atlasCidrBlock;
+        myVPCs.push(my);
+      })
+      // console.log(JSON.stringify(myVPCs, null, 2));
+      return myVPCs;
     });
 };

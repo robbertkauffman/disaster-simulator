@@ -34,8 +34,14 @@ def home():
 
 @app.route('/find', methods = ['GET'])
 def perform_reads():
-    restaurant_record=collection.find_one({},{"_id":0})
-    return restaurant_record
+    restaurant_record=collection.aggregate([
+        {"$sample": { "size": 1 }},
+        {"$project": {"_id":0}}
+    ])
+
+    for doc in restaurant_record:
+        json_restaurant_doc = json.dumps(doc, default=json_util.default)
+    return json_restaurant_doc
 
 @app.route('/insert', methods = ['GET'])
 def perform_inserts():
@@ -61,11 +67,12 @@ def search():
     {
       "$search": {
         'text': {
-                'query': "Hamburgers",
+                'query': "American",
                 'path': "cuisine"
             }
         },
     },
+    { "$sample": { "size": 1 } },
     {
         "$project": {
         "_id": 0
@@ -73,14 +80,11 @@ def search():
     },
     ]
 
-
-    json_docs = []
-
     search_record=collection.aggregate(pipeline)
+    
     for doc in search_record:
-        json_doc = json.dumps(doc, default=json_util.default)
-        json_docs.append(json_doc)
-    return json_doc
+        json_search_doc = json.dumps(doc, default=json_util.default)
+    return json_search_doc
 
 if __name__ == '__main__':
      app.run(debug=True,host='0.0.0.0')

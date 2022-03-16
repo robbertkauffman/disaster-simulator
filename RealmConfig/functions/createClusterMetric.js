@@ -7,8 +7,8 @@ exports = async function(request, response) {
     .post({
       //"url": `${SCHEME}://${context.values.get("AtlasAPIKeyPublic")}:${context.values.get("AtlasAPIKeyPrivate")}@${ATLAS_API_HOSTNAME_PATH}`,
       "url": `${SCHEME}://${DATA_API_HOSTNAME_PATH}`,
-      "body": EJSON.parse(request.body.text()),
-      encodeBodyAsJSON: true,
+      "body": request.body.text(),
+      //encodeBodyAsJSON: true,
       "headers": {
         'Content-Type': ['application/json'],
         'Access-Control-Request-Headers': ['*'],

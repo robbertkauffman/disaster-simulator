@@ -28,28 +28,38 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 - Patho Bardhan
     - App backend
 - Shawn Chai
-    - Documentation and diagram
+    - Control Plane backend
+    - VPC configuration
 - Jake Cosme
-    - Documentation and diagram
+    - Documentation, diagram, and video
 - Joseph Hansen
-    - CP backend
+    - Control Plane backend
+    - VPC configuration
+    - Realm functions
 - Robbert Kauffman
     - App/CP Frontend
+    - Realm functions
 - Timothy Marland
-    - Realm: Serves as the overall backend platform
+    - Realm, Realm Sync
+    - Mobile (Swift)
 - Marianne Myers
     - App/CP Frontend
-    - Realm
+    - Realm functions
 
 # Demonstration Script
 
-_Demonstration script (or link to script) goes here_
+## Set Up
+1. Create your Atlas M20 replica set Cluster with each node living in different regions. The demo contains us-east-2, us-west-2, and us-west-1 from AWS
+2. Load Sample Data
+3. Create a New App from the Realm web UI
+### Front End
 
-_The demonstration script should provide all the information required for another MongoDB SA to deliver your demonstration to a prospect. This should include:_
+### Backend
+1. Go to your AWS Console
+2. Click Create VPC and fill out like below
 
-* _setup/installation steps_
-* _step by step instructions on how to give the demonstration_
-* _key points to emphasize at each point in the demonstration_
-* _any tear down steps required to reset the demonstration so it is ready for the next time_
-hackathonReadme.md
-Displaying hackathonReadme.md.
+3. Go to the *Network Access* from Atlas, click Add *Peering Connection*, then fill out the information accordingly to the VPC you created from AWS
+4. Follow the instructions from "How do I accept my peering connection in AWS?" that will show up after you create the peering connection in Atlas. Accept from AWS
+5. Follow the instructions from "How di I add Atlas' CIDR block to my route tables?". This will lead you to edit routes from AWS
+6. Do this twice for your primary region & one of your secondary region
+

@@ -30,7 +30,7 @@ const ec2 = new AWS.EC2({});
 
 const params = {
     // DryRun: true,
-    RouteTableId: myRoute,
+    RouteTableId: myRouteTableId,
     DestinationCidrBlock: myRoute
 };
 

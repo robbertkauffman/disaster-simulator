@@ -51,7 +51,13 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 ## Set Up
 1. Create your Atlas M20 replica set Cluster with each node living in different regions. The demo contains us-east-2, us-west-2, and us-west-1 from AWS
 2. Load Sample Data
-3. Create a New App from the Realm web UI
+3. Create a New App from the Realm UI
+    - Enable Hosting via Realm -> Manage -> Deployment
+    - Generate an API Key for use by Realm via Project -> Access Manager -> Create API Key
+    - Install the Realm-CLI to your localhost
+    - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmExport` directory 
+    - Confirm API key authentication is enabled. 
+    
 ### Front End
 
 ### Backend

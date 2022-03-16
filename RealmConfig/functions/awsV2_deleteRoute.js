@@ -4,12 +4,12 @@ var AWS = require("aws-sdk");
 const region = request.query;
 console.log('region is', region);
 
-  if (myRegion === "us-east-2") {
+  if (region === "us-east-2") {
     tbl = "rtb-0c6e055c94067cf0e";
     rte = "192.168.240.0/21"
   }
   
-  if (myRegion === "us-west-2") {
+  if (region === "us-west-2") {
     tbl = "rtb-0ad558083560c839e";
     rte = "192.168.248.0/21"
   }

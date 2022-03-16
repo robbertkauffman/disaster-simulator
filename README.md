@@ -71,6 +71,19 @@ Using Chrome, open `/fontend/index.html`
 6. Do this twice for your primary region & one of your secondary region. The completed Atlas Peering will look like below
 ![VPC in Atlas](/assets/images/vpc_atlas.png)
 
+#### Backend Application
+1. git clone the repo in both AWS VMs
+2. On first AWS VM, cd mdb-sa-hackathon-202203-t9/backend
+3. Update config.yml with the Port on which the app should work (default 5000), Atlas CONNECTION_STRING, DB=Database, and COLLECTION 
+4. Run the application with nohup backend.py &
+5. On AWS, add an inbound rule to the security group to allow traffic to the port on which the app is running
+![Screen Shot 2022-03-16 at 1 31 15 PM](https://user-images.githubusercontent.com/5925280/158663612-052208fc-27e3-4eea-8edc-500ade83d3ea.jpeg)
+5. run the command 
+```
+nohup python3 backend.py &
+```
+6. Repeat the steps on the other AWS VM
+
 ### Mobile Application
 
 Update the variables in SwiftDataApp.

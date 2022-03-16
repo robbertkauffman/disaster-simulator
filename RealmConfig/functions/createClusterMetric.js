@@ -9,9 +9,9 @@ exports = function() {
       "url": `${SCHEME}://${DATA_API_HOSTNAME_PATH}`,
       "body": context.http.body,
       "headers": {
-        'Content-Type': 'application/json',
-        'Access-Control-Request-Headers': '*',
-        'api-key': 'YEUUfqrDqmzTBgEWsfHWbOxm0KH8TgUsyFC1Rvy8T9mnQArhfWefAR3DRSvhYyE'
+        'Content-Type': ['application/json'],
+        'Access-Control-Request-Headers': ['*'],
+        'api-key': ['EUUfqrDqmzTBgEWsfHWbOxm0KH8TgUsyFC1Rvy8T9mnQArhfWefAR3DRSvhYyE']
       }
     })
     .then(response => {

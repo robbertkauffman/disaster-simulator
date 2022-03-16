@@ -1,5 +1,35 @@
 [
     {
+        "route": "/createNetworkPartition",
+        "http_method": "GET",
+        "function_name": "awsV2_deleteRoute",
+        "validation_method": "NO_VALIDATION",
+        "respond_result": false,
+        "fetch_custom_user_data": false,
+        "create_user_on_auth": false,
+        "disabled": false
+    },
+    {
+        "route": "/restoreNetwork",
+        "http_method": "GET",
+        "function_name": "awsV2_restoreRoute",
+        "validation_method": "NO_VALIDATION",
+        "respond_result": false,
+        "fetch_custom_user_data": false,
+        "create_user_on_auth": false,
+        "disabled": false
+    },
+    {
+        "route": "/createClusterMetric",
+        "http_method": "POST",
+        "function_name": "createClusterMetric",
+        "validation_method": "NO_VALIDATION",
+        "respond_result": false,
+        "fetch_custom_user_data": false,
+        "create_user_on_auth": false,
+        "disabled": false
+    },
+    {
         "route": "/atlasProcesses",
         "http_method": "GET",
         "function_name": "atlasProcesses",
@@ -33,36 +63,6 @@
         "route": "/testFailover",
         "http_method": "POST",
         "function_name": "testFailover",
-        "validation_method": "NO_VALIDATION",
-        "respond_result": false,
-        "fetch_custom_user_data": false,
-        "create_user_on_auth": false,
-        "disabled": false
-    },
-    {
-        "route": "/createNetworkPartition",
-        "http_method": "GET",
-        "function_name": "awsV2_deleteRoute",
-        "validation_method": "NO_VALIDATION",
-        "respond_result": false,
-        "fetch_custom_user_data": false,
-        "create_user_on_auth": false,
-        "disabled": false
-    },
-    {
-        "route": "/restoreNetwork",
-        "http_method": "GET",
-        "function_name": "awsV2_restoreRoute",
-        "validation_method": "NO_VALIDATION",
-        "respond_result": false,
-        "fetch_custom_user_data": false,
-        "create_user_on_auth": false,
-        "disabled": false
-    },
-    {
-        "route": "/createClusterMetric",
-        "http_method": "POST",
-        "function_name": "createClusterMetric",
         "validation_method": "NO_VALIDATION",
         "respond_result": false,
         "fetch_custom_user_data": false,

@@ -11,7 +11,7 @@
     },
     {
         "route": "/createNetworkPartition",
-        "http_method": "POST",
+        "http_method": "GET",
         "function_name": "awsV2_deleteRoute",
         "validation_method": "NO_VALIDATION",
         "respond_result": false,

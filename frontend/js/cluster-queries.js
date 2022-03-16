@@ -1,25 +1,22 @@
+// REGION_A_ENDPOINT = "http://ec2-3-135-221-191.us-east-2.compute.amazonaws.com:5000";
 REGION_A_ENDPOINT = "http://127.0.0.1:5001";
+// REGION_B_ENDPOINT = "http://ec2-54-71-127-55.us-west-2.compute.amazonaws.com:5000";
 REGION_B_ENDPOINT = "http://127.0.0.1:5002";
-REGION_C_ENDPOINT = "http://127.0.0.1:5003";
+// REGION_C_ENDPOINT = "http://127.0.0.1:5003";
 FIND_PATH = "find";
 INSERT_PATH = "insert";
 SEARCH_PATH = "search";
 REGION_A_CONTAINER = "region-a-container";
 REGION_B_CONTAINER = "region-b-container";
-REGION_C_CONTAINER = "region-c-container";
+// REGION_C_CONTAINER = "region-c-container";
 
-ATLAS_API_URL = "https://cloud.mongodb.com/api/atlas/v1.0/groups/622fbb4d792ac378e5188f23/clusters/BBBE";
-ATLAS_API_PUBLIC_KEY = "jvmzxzbc";
-ATLAS_API_PRIVATE_KEY = "d4f44862-766f-4b81-8322-2213150159f4";
+CLUSTER_DETAILS_API = "https://data.mongodb-api.com/app/t9-realm-svcs-qxpsp/endpoint/getClusterDetails";
 
 // do queries each second
 setInterval(queryAllRegions, 1000);
 
 drawTopologyLines()
-
-// init fetch
-// const DigestFetch = window.DigestFetch;
-// const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY, { algorithm: 'MD5' });
+fetchClusterDetails();
 
 function queryAllRegions() {
   find(REGION_A_ENDPOINT, REGION_A_CONTAINER);
@@ -28,40 +25,79 @@ function queryAllRegions() {
   find(REGION_B_ENDPOINT, REGION_B_CONTAINER);
   insertDocument(REGION_B_ENDPOINT, REGION_B_CONTAINER);
   search(REGION_B_ENDPOINT, REGION_B_CONTAINER);
-  find(REGION_C_ENDPOINT, REGION_C_CONTAINER);
-  insertDocument(REGION_C_ENDPOINT, REGION_C_CONTAINER);
-  search(REGION_C_ENDPOINT, REGION_C_CONTAINER);
+  // find(REGION_C_ENDPOINT, REGION_C_CONTAINER);
+  // insertDocument(REGION_C_ENDPOINT, REGION_C_CONTAINER);
+  // search(REGION_C_ENDPOINT, REGION_C_CONTAINER);
+}
+
+function logRequest(success, latency, logElmId) {
+  timestamp = new Date().toLocaleString('en-US', { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit'});
+  if (success) {
+    logText = `[${timestamp}]: Success! Last response took ${latency} ms...`
+    document.getElementById(logElmId).className = "log success";
+  } else {
+    logText = `[${timestamp}]: Error! Last response took ${latency} ms...`
+    document.getElementById(logElmId).className = "log error";
+  }
+  document.getElementById(logElmId).innerHTML = logText;
 }
 
 function find(endpoint, htmlId) {
+  startTime = Date.now();
   fetch(endpoint + '/' + FIND_PATH)
     .then(response => response.json())
     .then(data => {
+      endTime = Date.now();
+      logElmId = htmlId + '-' + FIND_PATH + '-log';
+      logRequest(true, endTime - startTime, logElmId);
       document.getElementById(htmlId + '-' + FIND_PATH).innerHTML = JSON.stringify(data);
+    }).catch(e => {
+      endTime = Date.now();
+      logElmId = htmlId + '-' + FIND_PATH + '-log';
+      logRequest(false, endTime - startTime, logElmId);
+      document.getElementById(htmlId + '-' + FIND_PATH).innerHTML = e;
     });
 }
 
 function insertDocument(endpoint, htmlId) {
+  startTime = Date.now();
   fetch(endpoint + '/' + INSERT_PATH)
     .then(response => response.json())
     .then(data => {
+      endTime = Date.now()
+      logElmId = htmlId + '-' + INSERT_PATH + '-log';
+      logRequest(true, endTime - startTime, logElmId);
       document.getElementById(htmlId + '-' + INSERT_PATH).innerHTML = JSON.stringify(data);
+    }).catch(e => {
+      endTime = Date.now();
+      logElmId = htmlId + '-' + INSERT_PATH + '-log';
+      logRequest(false, endTime - startTime, logElmId);
+      document.getElementById(htmlId + '-' + INSERT_PATH).innerHTML = e;
     });
 }
 
 
 function search(endpoint, htmlId) {
+  startTime = Date.now();
   fetch(endpoint + '/' + SEARCH_PATH)
     .then(response => response.json())
     .then(data => {
+      endTime = Date.now()
+      logElmId = htmlId + '-' + SEARCH_PATH + '-log';
+      logRequest(true, endTime - startTime, logElmId);
       document.getElementById(htmlId + '-' + SEARCH_PATH).innerHTML = JSON.stringify(data);
-  });
+    }).catch(e => {
+      endTime = Date.now();
+      logElmId = htmlId + '-' + SEARCH_PATH + '-log';
+      logRequest(false, endTime - startTime, logElmId);
+      document.getElementById(htmlId + '-' + SEARCH_PATH).innerHTML = e;
+    });
 }
 
 function drawTopologyLines() {
   new LeaderLine(
-    document.getElementById('mongo-a'),
-    document.getElementById('mongo-b'),
+    document.getElementById('mongo-1'),
+    document.getElementById('mongo-2'),
     {
       color: 'grey',
       startPlug: 'behind',
@@ -69,8 +105,8 @@ function drawTopologyLines() {
     }
   );
   new LeaderLine(
-    document.getElementById('mongo-b'),
-    document.getElementById('mongo-c'),
+    document.getElementById('mongo-2'),
+    document.getElementById('mongo-3'),
     {
       color: 'grey',
       startPlug: 'behind',
@@ -79,7 +115,7 @@ function drawTopologyLines() {
   );
   new LeaderLine(
     document.getElementById('app-a'),
-    document.getElementById('mongo-a'),
+    document.getElementById('mongo-1'),
     {
       color: '#8a795d',
       startSocket: 'bottom',
@@ -88,75 +124,31 @@ function drawTopologyLines() {
   );
   new LeaderLine(
     document.getElementById('app-b'),
-    document.getElementById('mongo-b'),
+    document.getElementById('mongo-1'),
     {
       color: '#8a795d',
       startSocket: 'bottom',
       endSocket: 'top',
     }
   );
-
 }
 
 async function fetchClusterDetails() {  
-  // const DigestFetch = window.DigestFetch;
-  // const client = new DigestFetch(ATLAS_API_PUBLIC_KEY, ATLAS_API_PRIVATE_KEY);
-  // const response = await client.fetch(ATLAS_API_URL, {
-  //   mode: 'no-cors'
-  // });
-  // console.log(response.json());
-  // const AxiosDigestAuth = window.AxiosDigestAuth;
-
-  // const digestAuth = new AxiosDigestAuth({
-  //   username: ATLAS_API_PUBLIC_KEY,
-  //   password: ATLAS_API_PRIVATE_KEY,
-  // });
+  clusterDetails = await fetch(CLUSTER_DETAILS_API)
+    .then(response => response.json())
+    .then(data => {
+      return data;
+  }).catch(
+    e => console.log(e)
+  );
   
-  // const MakeARequest = async () => {
-  //   const response = await digestAuth.request({
-  //     headers: { Accept: "application/json" },
-  //     method: "GET",
-  //     url: ATLAS_API_URL,
-  //   });
-  // }
-
-  /*
-  const data = await axios.get(ATLAS_API_URL, { mode: 'no-cors'}).
-    catch(err => {
-      if (err.response.status === 401) {
-        const authDetails = err.response.headers['www-authenticate'].split(', ').map(v => v.split('='));
-
-        ++count;
-        const nonceCount = ('00000000' + count).slice(-8);
-        const cnonce = crypto.randomBytes(24).toString('hex');
-
-        const realm = authDetails[0][1].replace(/"/g, '');
-        const nonce = authDetails[2][1].replace(/"/g, '');
-
-        const md5 = str => crypto.createHash('md5').update(str).digest('hex');
-
-        const HA1 = md5(`${ATLAS_API_PUBLIC_KEY}:${realm}:${ATLAS_API_PRIVATE_KEY}`);
-        const HA2 = md5(`GET:${ATLAS_API_URL}`);
-        const response = md5(`${HA1}:${nonce}:${nonceCount}:${cnonce}:auth:${HA2}`);
-
-        const authorization = `Digest username="${publicKey}",realm="${realm}",` +
-          `nonce="${nonce}",uri="${ATLAS_API_URL}",qop="auth",algorithm="MD5",` +
-          `response="${response}",nc="${nonceCount}",cnonce="${cnonce}"`;
-
-        return axios.get(ATLAS_API_URL, { mode: 'no-cors', headers: { authorization } });
+  if (clusterDetails && clusterDetails.replicationSpec) {
+    Object.keys(clusterDetails.replicationSpec).forEach((key, i) => {
+      elm = document.getElementById("mongo-" + (i + 1) + "-caption");
+      if (elm) {
+        currCaption = elm.innerHTML;
+        elm.innerHTML = currCaption.replace("{REGION}", key);
       }
-      throw err;
-    }).
-    catch(err => {
-      throw err;
     });
-
-  return data;*/
-  config = {
-    auth: {
-      username: ATLAS_API_PUBLIC_KEY,
-      password: ATLAS_API_PRIVATE_KEY
-    }
   }
-  const response = await axios.get(ATLAS_API_URL, config);
 }

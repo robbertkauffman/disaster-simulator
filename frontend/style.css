@@ -68,7 +68,40 @@ button.simulate-partition:hover {
   left: 680px;
 }
 
+.simulate-failure-menu {
+  position: absolute;
+}
+
+.simulate-failure-menu button {
+  display: block;
+  margin-bottom: 5px;
+  background-color: indianred;
+  border-color: indianred;
+}
+
+.simulate-failure-menu button:hover {
+  background-color: darkred;
+  border-color: darkred;
+}
+
+.form-check-input:checked {
+  background-color: indianred;
+  border-color: indianred;
+}
+
 code {
   height: 100px;
   text-overflow: hidden;
+}
+
+.log {
+  margin-bottom: 0;
+}
+
+.log.success {
+  color: green;
+}
+
+.log.error {
+  color: indianred;
 }

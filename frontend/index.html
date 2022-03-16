@@ -18,41 +18,58 @@
         </div>
       </div>
       <div class="topology">
+        <div class="simulate-failure-menu" role="group" aria-label="simulate failure menu">
+          <p>Simulate failure:</p>
+          <button type="button" class="btn btn-primary">Network partition</button>
+          <button type="button" class="btn btn-primary">Atlas regional failover</button>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+            <label class="form-check-label" for="flexCheckChecked">
+              Retryable reads
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+            <label class="form-check-label" for="flexCheckChecked">
+              Retryable writes
+            </label>
+          </div>
+        </div>
         <div class="row justify-content-center appserver-row">
           <div class="col-3">
             <figure class="figure">
               <img src="img/appserver.png" class="appserver" id="app-a" alt="appserver" />
               <figcaption class="figure-caption text-center">App server — US EAST</figcaption>
             </figure>
-            <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-a" data-bs-toggle="tooltip" 
-                data-bs-placement="top" title="Simulate network partition in this region">X</button>
+            <!-- <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-a" data-bs-toggle="tooltip" 
+                data-bs-placement="top" title="Simulate network partition in this region">X</button> -->
           </div>
           <div class="col-3">
             <figure class="figure">
               <img src="img/appserver.png" class="appserver" id="app-b" alt="appserver" />
               <figcaption class="figure-caption text-center">App server — US WEST</figcaption>
             </figure>
-            <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-b" data-bs-toggle="tooltip" 
-                data-bs-placement="top" title="Simulate network partition in this region">X</button>
+            <!-- <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-b" data-bs-toggle="tooltip" 
+                data-bs-placement="top" title="Simulate network partition in this region">X</button> -->
           </div>
         </div>
         <div class="row justify-content-center mongo-row">
           <div class="col-3">
             <figure class="figure">
-              <img src="img/primary-active.png" class="primary node" id="mongo-a" alt="primary node" />
-              <figcaption class="figure-caption text-center">Primary — US EAST</figcaption>
+              <img src="img/primary-active.png" class="primary node" id="mongo-1" alt="primary node" />
+              <figcaption class="figure-caption text-center" id="mongo-1-caption">Primary — {REGION}</figcaption>
             </figure>
           </div>
           <div class="col-3">
             <figure class="figure">
-              <img src="img/secondary-active.png" class="secondary node" id="mongo-b" alt="secondary node" />
-              <figcaption class="figure-caption text-center">Secondary — US WEST</figcaption>
+              <img src="img/secondary-active.png" class="secondary node" id="mongo-2" alt="secondary node" />
+              <figcaption class="figure-caption text-center" id="mongo-2-caption">Secondary — {REGION}</figcaption>
             </figure>
           </div>
           <div class="col-3">
             <figure class="figure">
-              <img src="img/secondary-active.png" class="secondary node" id="mongo-c" alt="secondary node" />
-              <figcaption class="figure-caption text-center">Secondary — US WEST</figcaption>
+              <img src="img/secondary-active.png" class="secondary node" id="mongo-3" alt="secondary node" />
+              <figcaption class="figure-caption text-center" id="mongo-3-caption">Secondary — {REGION}</figcaption>
             </figure>
           </div>
         </div>
@@ -69,37 +86,32 @@
         <div class="col">
           <h1 class="display-6">Region A</h1>
           <p class="h6">findOne():</p>
+          <p id="region-a-container-find-log" class="log"></p>
           <code id="region-a-container-find"></code>
           <p class="h6">insertOne():</p>
+          <p id="region-a-container-insert-log" class="log"></p>
           <code id="region-a-container-insert"></code>
           <p class="h6">$search:</p>
+          <p id="region-a-container-search-log" class="log"></p>
           <code id="region-a-container-search"></code>
         </div>
         <div class="col">
           <h1 class="display-6">Region B</h1>
           <p class="h6">findOne():</p>
+          <p id="region-b-container-find-log" class="log"></p>
           <code id="region-b-container-find"></code>
           <p class="h6">insertOne():</p>
+          <p id="region-b-container-insert-log" class="log"></p>
           <code id="region-b-container-insert"></code>
           <p class="h6">$search:</p>
+          <p id="region-b-container-search-log" class="log"></p>
           <code id="region-b-container-search"></code>
-        </div>
-        <div class="col">
-          <h1 class="display-6">Region C</h1>
-          <p class="h6">findOne():</p>
-          <code id="region-c-container-find"></code>
-          <p class="h6">insertOne():</p>
-          <code id="region-c-container-insert"></code>
-          <p class="h6">$search:</p>
-          <code id="region-c-container-search"></code>
         </div>
       </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <!-- <script src="js/axios-digest-auth.js"></script> -->
     <script src="js/leader-line.min.js"></script>
     <script src="js/cluster-queries.js"></script>
   </body>

@@ -7,6 +7,8 @@ function mergeArrayObjects(arr1,arr2){
   return arr1.map((item,i)=>{
      if(item.containerId === arr2[i].containerId){
         return Object.assign({},item,arr2[i])
+     } else {
+        console.log(item.containerId);
      }
   })
 }

@@ -1,17 +1,27 @@
 [
     {
-        "name": "atlas_getAWSRouting",
-        "private": true,
-        "run_as_system": true
-    },
-    {
         "name": "testFailover",
         "private": false,
         "run_as_system": true
     },
     {
-        "name": "atlas_getNetworkPeers",
+        "name": "atlas_getAWSRouting",
         "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "atlas_getNetworkVPCs",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "awsV2_restoreRoute",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "getClusterDetails",
+        "private": false,
         "run_as_system": true
     },
     {
@@ -30,17 +40,7 @@
         "run_as_system": true
     },
     {
-        "name": "awsV2_restoreRoute",
-        "private": true,
-        "run_as_system": true
-    },
-    {
-        "name": "getClusterDetails",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "atlas_getNetworkVPCs",
+        "name": "atlas_getNetworkPeers",
         "private": true,
         "run_as_system": true
     }

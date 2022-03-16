@@ -9,7 +9,7 @@ exports = async function(myRegion, myPeerId, myRoute){
 const myPeers = await context.functions.execute('atlas_getNetworkPeers');
 
 myPeers.forEach((obj,i) => {
-  console.log(obj,i);
+  console.log(JSON.stringify(obj,null,2));
 })
 
 const myRouteTableId = await context.functions.execute("awsV2_getAtlasPeerRouteTable", myRegion, myPeerId);

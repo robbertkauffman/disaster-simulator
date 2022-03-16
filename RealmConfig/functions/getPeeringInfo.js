@@ -23,4 +23,6 @@ exports = function() {
       const vpcData = EJSON.parse(response.body.text());
       return vpcData.results;
     });
+    
+  console.log(myVPCs, myPeers);
 };

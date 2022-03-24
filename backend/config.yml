@@ -1,4 +1,4 @@
 DATABASE:
-  CONNECTION_STRING: 
-  DB:
-  COLLECTION:
+  CONNECTION_STRING: mongodb+srv://root:root@myatlascluster.zywgx.mongodb.net/myFirstDatabase
+  DB: sample_restaurants
+  COLLECTION: restaurants

@@ -19,16 +19,21 @@ app = Flask(__name__)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
+app_port= 5001
+retry_writes= True
+retry_reads= False
+
 with open("config.yml", "r") as ymlfile:
     cfg = yaml.safe_load(ymlfile)
     conn_string= cfg["DATABASE"]["CONNECTION_STRING"]
     db= cfg["DATABASE"]["DB"]
     collection=cfg["DATABASE"]["COLLECTION"]
-    
-    connection = pymongo.MongoClient(conn_string)
+   
+    connection = pymongo.MongoClient(conn_string, retryWrites=retry_writes, retryReads=retry_reads)
     db = connection[db]
     collection = db[collection]
-
+    
+    #app_port=cfg["APP"]["PORT"]
 
 @app.route('/')
 def home():
@@ -81,6 +86,24 @@ def search():
         }
     },
     ]
+def search():
+
+    pipeline = [
+    {
+      "$search": {
+        'text': {
+                'query': "American",
+                'path': "cuisine"
+            }
+        },
+    },
+    { "$sample": { "size": 1 } },
+    {
+        "$project": {
+        "_id": 0
+        }
+    },
+    ]
 
     search_record=collection.aggregate(pipeline)
     
@@ -104,4 +127,4 @@ def get_region():
       return "Could not determine region"
 
 if __name__ == '__main__':
-     app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0', port=app_port)

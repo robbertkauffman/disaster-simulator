@@ -1,4 +1,4 @@
 DATABASE:
-  CONNECTION_STRING: 
-  DB:
-  COLLECTION:
+  CONNECTION_STRING:
+  DB: sample_restaurants
+  COLLECTION: restaurants

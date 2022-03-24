@@ -50,12 +50,15 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 ## Set Up
 1. Create your Atlas M20 replica set Cluster with each node living in different regions. The demo contains us-east-2, us-west-2, and us-west-1 from AWS
 2. Load Sample Data
+3. Create an API Key for your Atlas Project with Project Owner access
 3. Create a New App from the Realm UI
     - Enable Hosting via Realm -> Manage -> Deployment
     - Generate an API Key for use by Realm via Project -> Access Manager -> Create API Key
-    - Update the `clusterName` in `/RealmConfig/data_sources/mongodb-atlas` to be your cluster's name
+    - Create 3 Secrets for your Atlas API Key via Realm -> Secrets -> Create New Value, with names `AtlasAPIKeyPublic`, `AtlasAPIKeyPrivate` and `awsSecretValue`, and of type `Secret`
+    - Update the `clusterName` in `/RealmConfig/data_sources/mongodb-atlas/config.json` to the name of your Atlas Cluster. Do the same for the Value `AtlasClusterName` in `RealmConfig/values/AtlasClusterName.json`
+    - Update the `Value` in `RealmConfig/values/AtlasGroupId.json` to your Atlas Group/Project ID (UUID in the Atlas Project URL)
     - Install the Realm-CLI to your localhost
-    - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmConfig` directory 
+    - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmConfig` directory: `realm-cli push --local ./RealmConfig --remote <Realm-App-ID>`
     
 ### Front End
 
@@ -72,23 +75,26 @@ Using Chrome, open `/fontend/index.html`
 ![VPC in Atlas](/assets/images/vpc_atlas.png)
 
 #### Backend Application
-1. git clone the repo in both AWS VMs
-2. On first AWS VM, 
+SSH into each AWS VM and do the following:
+1. `git clone` the repo
+2. Install the Python 3 modules: 
+```
+pip3 install pymongo[srv] flask flask_cors pyyaml
+```
+3. Navigate to the `backend` folder:
 ```
 cd mdb-sa-hackathon-202203-t9/backend
 ```
-3. Update config.yml with the Port on which the app should work (default 5000), Atlas CONNECTION_STRING, DB=Database, and COLLECTION 
-4. Run the application with nohup backend.py &
-5. On AWS, add an inbound rule to the security group to allow traffic to the port on which the app is running
+4. Update `config.yml` with the Atlas CONNECTION_STRING. Change DB=Database and COLLECTION if using something other than sample data
+5. In AWS Console, add an inbound rule to the Security Group to allow traffic to the ports (5000-5004) on which the app is running
 ![Screen Shot 2022-03-16 at 1 31 15 PM](https://user-images.githubusercontent.com/5925280/158663612-052208fc-27e3-4eea-8edc-500ade83d3ea.jpeg)
-5. run the command 
+6. Run the backend APIs:
 ```
-nohup python3 backend.py &
+chmod +x start.sh
+./start.sh
 ```
-6. Repeat the steps on the other AWS VM
 
 ### Mobile Application
-
 Update the variables in SwiftDataApp.
 
 1. Data API URL

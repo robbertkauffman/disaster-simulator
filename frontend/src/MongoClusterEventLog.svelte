@@ -1,0 +1,66 @@
+<script>
+  import { onDestroy, onMount } from 'svelte';
+  import { isRunning } from './store.js';
+
+  export let realmAppEndpoint;
+
+  const CLUSTER_EVENTS_PATH = "/getAtlasClusterEvents";
+  const INTERVAL = 10; // in seconds
+
+  let events = [];
+  let requestInterval;
+
+  onMount(() => {
+  });
+
+  onDestroy(() => {
+    clearInterval(requestInterval);
+  });
+
+  isRunning.subscribe(value => {
+		if (value) {
+      requestInterval = setInterval(getAtlasClusterEvents, INTERVAL * 1000);
+    } else {
+      clearInterval(requestInterval);
+    }
+	});
+
+  function getMinDate() {
+    const minDate = new Date();
+    minDate.setSeconds(minDate.getSeconds() - INTERVAL);
+    return minDate.toISOString();
+  }
+
+  async function getAtlasClusterEvents() {  
+    try {
+      const url = realmAppEndpoint + CLUSTER_EVENTS_PATH + '?minDate=' + getMinDate();
+      const resp = await fetch(url, { method: 'GET' });
+      const data = await resp.json();
+      if (resp.ok && data && data.results) {
+        events = events.concat(data.results);
+      }
+    } catch (e) {
+      console.log(`Get Atlas Cluster events failed: ${e}`)
+    }
+}
+</script>
+
+<div class="col">
+  <div id="cluster-events" class="text-end">
+    <p class="h5">Cluster event log</p>
+    <table class="text-start float-end">
+      {#each events.reverse() as event}
+        <tr>
+          <td><span class="text-muted">{event.created.split('T')[1].slice(0, -1)}:</span></td>
+          <td class="text-end">{event.eventTypeName}</td>
+        </tr>
+      {/each}
+    </table>
+  </div>
+</div>
+
+<style>
+  #cluster-events {
+    font-size: .75em
+  }
+</style>

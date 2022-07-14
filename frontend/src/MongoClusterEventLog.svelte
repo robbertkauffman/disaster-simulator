@@ -42,7 +42,11 @@
     } catch (e) {
       console.log(`Get Atlas Cluster events failed: ${e}`)
     }
-}
+  }
+
+  function getTimestamp() {
+    return new Date().toLocaleString('en-US', { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit'});
+  }
 </script>
 
 <div class="col">
@@ -51,7 +55,7 @@
     <table class="text-start float-end">
       {#each events.reverse() as event}
         <tr>
-          <td><span class="text-muted">{event.created.split('T')[1].slice(0, -1)}:</span></td>
+          <td><span class="text-muted">{getTimestamp(event.created)}:</span></td>
           <td class="text-end">{event.eventTypeName}</td>
         </tr>
       {/each}

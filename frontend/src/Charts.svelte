@@ -21,11 +21,13 @@
       const chart = sdk.createChart({
         chartId: chartId.id,
         height: "300px",
-        maxDataAge: 10,
+        filter: { ts: { $gt: new Date() }},
+        maxDataAge: 30,
         showAttribution: false
       });
-      await chart.render(chartId.elm);
-      chart.setFilter({ ts: { $gt: new Date() }});
+      await chart
+        .render(chartId.elm)
+        .catch(() => console.log('Error while rendering chart'));
     }
   }
 </script>

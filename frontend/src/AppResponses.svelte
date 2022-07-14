@@ -1,48 +1,52 @@
 <script>
-  import DbOperation from './DbOperation.svelte';
-  import { afterUpdate, onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import { isRunning } from './store.js';
 
   export let region = 'REGION';
   export let appServerEndpoint;
 
-  let operations = [];
+  const INTERVAL = 1000;
+  const REQUEST_LOG_PATH = '/requestlog';
 
-  const FIND_PATH = "/find";
-  const INSERT_PATH = "/insert";
-  // const SEARCH_PATH = "/search";
-  
+  let requestLog = [];
+  let requestInterval;
+
   onMount(() => {
-    setOperations();
 	});
 
-  afterUpdate(() => {
-    setOperations();
+  onDestroy(() => {
+    clearInterval(requestInterval);
   });
+  
+  isRunning.subscribe(value => {
+		if (value) {
+      requestInterval = setInterval(getRequestLog, INTERVAL);
+    } else {
+      clearInterval(requestInterval);
+    }
+	});
 
-  function setOperations() {
-    operations = [
-      {
-        operationName: 'findOne()',
-        url: appServerEndpoint + FIND_PATH,
-        timeout: 10000
-      },
-      {
-        operationName: 'insertOne()',
-        url: appServerEndpoint + INSERT_PATH,
-        timeout: 10000
-      },
-      // {
-      //   operationName: 'search()',
-      //   url: appServerEndpoint + SEARCH_PATH,
-      //   timeout: 10000
-      // }
-    ];
+  async function getRequestLog() {
+    try {
+      const resp = await fetch(appServerEndpoint + REQUEST_LOG_PATH);
+      requestLog = await resp.json();
+    } catch(e) {
+      console.log(`Error while fetching request log: ${e}`);
+    };
   }
 </script>
 
-<div class="col">
-  <h1 class="display-6">App log — {region.toUpperCase()}</h1>
-  {#each operations as operation}
-    <DbOperation {...operation}/>
-  {/each}
-</div>
+{#if requestLog.length > 0}
+  <div class="col">
+    <h1 class="display-6">App log — {region.toUpperCase()}</h1>
+    {#each requestLog as request}
+      <p class="log {request.success ? 'text-success' : 'text-danger'}"><span>{request.ts}:</span> '{request.operation}' in {request.latency}ms...</p>
+    {/each}
+  </div>
+{/if}
+
+<style>
+  .log {
+    margin-bottom: 0;
+  }
+</style>

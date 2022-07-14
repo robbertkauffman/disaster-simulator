@@ -40,44 +40,32 @@ As shown from the above diagram, there will be 2 separate backend entities confi
 
 ## Setup
 ### Atlas
-1. Create your Atlas M20 replica set Cluster with each node living in different regions. The demo contains us-east-2, us-west-2, and us-west-1 from AWS
+1. Create a dedicated Atlas cluster (e.g. M10)
 2. Load Sample Data
-3. Create an API Key for your Atlas Project with Project Owner access
+3. Create an API Key for your Atlas Project with *Project Owner* access
 4. Create a New App from the Realm UI
     - Enable Hosting via Realm -> Manage -> Deployment
     - Generate an API Key for use by Realm via Project -> Access Manager -> Create API Key
-    - Create 2 Secrets for your Atlas API Key via Realm -> Secrets -> Create New Value, with names `AtlasAPIKeyPublic` and `AtlasAPIKeyPrivate` of type `Secret`
-    - Update the `clusterName` in `/RealmConfig/data_sources/mongodb-atlas/config.json` to the name of your Atlas Cluster. Do the same for the Value `AtlasClusterName` in `RealmConfig/values/AtlasClusterName.json`
-    - Update the `Value` in `RealmConfig/values/AtlasGroupId.json` to your Atlas Group/Project ID (UUID in the Atlas Project URL)
+    - Create 2 Secrets for your Atlas API Key via Realm -> Secrets -> Create New Value, with names *AtlasAPIKeyPublic* and *AtlasAPIKeyPrivate* of type `Secret`
+    - Update the *clusterName* in `/RealmConfig/data_sources/mongodb-atlas/config.json` to the name of your Atlas Cluster. Do the same for the Value *AtlasClusterName* in `RealmConfig/values/AtlasClusterName.json`
+    - Update the *Value* in `RealmConfig/values/AtlasGroupId.json` to your Atlas Group/Project ID (UUID in the Atlas Project URL)
     - Install the Realm-CLI to your localhost
     - Run Realm-CLI [import](https://docs.mongodb.com/realm/manage-apps/deploy/manual/deploy-cli/) on the `RealmConfig` directory: `realm-cli push --local ./RealmConfig --remote <Realm-App-ID>`
-5. Optional: Create Atlas Search Index on `sample_restaurants.restaurants` with the following configuration (use the JSON Editor):
-```json
-{
-  "mappings": {
-    "dynamic": false,
-    "fields": {
-      "cuisine": {
-        "type": "string"
-      }
-    }
-  }
-}
-```
+
 
 ### Back-end Application
 SSH into each AWS VM and do the following:
 1. `git clone` the repo
 2. Install the Python 3 modules: 
 ```shell
-pip3 install pymongo[srv] flask flask_cors requests
+pip3 install pymongo[srv] flask flask_cors
 ```
 3. Navigate to the `backend` folder:
 ```shell
 cd mdb-sa-hackathon-202203-t9/backend
 ```
-4. Update the Atlas `CONNECTION_STRING` and `REALM_APP_ID` in `backend.py`. Change `DB=Database` and `COLLECTION` if using something other than sample data
-5. In AWS Console, add an inbound rule to the Security Group to allow traffic to the ports (5000-5004) on which the app is running
+4. Update the Atlas *CONNECTION_STRING* in `backend.py`. Change *DB=Database* and *COLLECTION* if using something other than sample data
+5. In AWS Console, add an inbound rule to the Security Group to allow traffic to the ports *5001* on which the app is running
 ![Screen Shot 2022-03-16 at 1 31 15 PM](https://user-images.githubusercontent.com/5925280/158663612-052208fc-27e3-4eea-8edc-500ade83d3ea.jpeg)
 6. In Atlas, add the VMs IP to the IP Access List, or allow access from anywhere
 7. Run the backend APIs:
@@ -87,11 +75,10 @@ chmod +x start.sh
 ```
 
 ### Front-end
-1. Make sure to have Node and NPM installed
-2. Run `npm install` from the `frontend` folder to install all dependencies
-3. Update `APP_HOSTNAMES` and `REALM_APP_ID` in `frontend/src/App.svelte`
-4. Run `npm run dev
-
+1. [Download & install Node](https://nodejs.org/en/download/) if you haven't already
+2. Navigate to the `frontend` folder and run `npm install` to install all dependencies
+3. Update *APP_HOSTNAMES* and *REALM_APP_ID* in `frontend/src/App.svelte`
+4. Run `npm run dev`
 
 ### Optional: Mobile Application
 Update the variables in `SwiftDataApp`:

@@ -1,23 +1,18 @@
 <script>
 	import { onMount } from 'svelte';
+	import { isRunning } from './store.js';
 	import AppResponses from './AppResponses.svelte';
 	import AppServer from './AppServer.svelte';
 	import Charts from './Charts.svelte';
 	import Controls from './Controls.svelte';
 	import MongoCluster from './MongoCluster.svelte';
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
-	import StartButton from './StartButton.svelte';
+	import StartStopButton from './StartStopButton.svelte';
 	
-	const APP_HOSTNAMES = ["http://ec2-54-165-63-246.compute-1.amazonaws.com", "http://ec2-34-209-63-18.us-west-2.compute.amazonaws.com"];
+	const APP_HOSTNAMES = ["http://localhost"];
 	const REALM_APP_ID = "disaster-simulator-jzqql";
   const REALM_APP_ENDPOINT = `https://data.mongodb-api.com/app/${REALM_APP_ID}/endpoint`;
 	const DEFAULT_PORT = 5001;
-	const PORTS = {
-		retryReadsTrueRetryWritesTrue: 5001,
-		retryReadsTrueRetryWritesFalse: 5002,
-		retryReadsFalseRetryWritesTrue: 5003,
-		retryReadsFalseRetryWritesFalse: 5004
-	}
 	const API_PATHS = {
 		region: "/region"
 	};
@@ -25,8 +20,9 @@
 	let appServers = [];
 	let appServerEndpoint = `${APP_HOSTNAMES[0]}:${DEFAULT_PORT}`;
 	let mongoNodes = [];
-	let retryReads, retryWrites;
+	let retryReads, retryWrites, readPreference;
 	let selectedPort = DEFAULT_PORT;
+	let isRunningVal;
 
 	onMount(() => {
 		getAppRegions();
@@ -52,29 +48,9 @@
 		appServers = newAppServers;
 	}
 
-	function updateAppServerEndpoints() {
-		if (retryReads) {
-			if (retryWrites) {
-				selectedPort = PORTS.retryReadsTrueRetryWritesTrue;
-			} else {
-				selectedPort = PORTS.retryReadsTrueRetryWritesFalse;
-			}
-		} else {
-			if (retryWrites) {
-				selectedPort = PORTS.retryReadsFalseRetryWritesTrue;
-			} else {
-				selectedPort = PORTS.retryReadsFalseRetryWritesFalse;
-			}
-		}
-
-		for (let i = 0; i < appServers.length; i++) {
-			appServers[i].endpoint = `${APP_HOSTNAMES[i]}:${selectedPort}`;
-		}
-	}
-
-	$: if (retryReads !== undefined || retryWrites !== undefined) {
-		updateAppServerEndpoints();
-  };
+	isRunning.subscribe(value => {
+		isRunningVal = value;
+	});
 </script>
 
 <main>
@@ -82,12 +58,12 @@
 		<div class="row header-row">
 			<div class="col text-center">
 				<h1>Disaster Simulator&reg;</h1>
-				<StartButton/>
+				<StartStopButton appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-2">
-				<Controls bind:retryReads={retryReads} bind:retryWrites={retryWrites} realmAppEndpoint={REALM_APP_ENDPOINT}/>
+				<Controls bind:retryReads={retryReads} bind:retryWrites={retryWrites} bind:readPreference={readPreference} realmAppEndpoint={REALM_APP_ENDPOINT}/>
 			</div>
 			<div class="col-8 topology">
 				<div class="row justify-content-center appserver-row">
@@ -106,11 +82,13 @@
 			</div>
 		</div>
 		<div class="row chart-row">
-			<!-- <Charts/> -->
+			{#if isRunningVal}
+				<Charts/>
+			{/if}
 		</div>
 		<div class="row">
 			{#each appServers as app}
-				{#if app.endpoint && app.region}
+				{#if isRunningVal && app.endpoint}
 					<AppResponses appServerEndpoint={app.endpoint} region={app.region}/>
 				{/if}
 			{/each}

@@ -1,135 +1,235 @@
+#!/usr/bin/env python3
+
 from bson import json_util
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import pymongo
 import re
-import requests
+from threading import Timer
 import time
 
 
-CONNECTION_STRING = 'mongodb+srv://USER:PASS@CLUSTERNAME.HASH.mongodb.net/myFirstDatabase'
+# Change these:
+CONNECTION_STRING = 'mongodb+srv://USERNAME:PASSWORD@CLUSTERNAME.PROJECTHASH.mongodb.net/myFirstDatabase'
+# CONNECTION_STRING = 'mongodb://localhost:27017'
 DB = 'sample_restaurants'
 COLLECTION = 'restaurants'
-REALM_APP_ID = 'disaster-simulator-jzqql'
-REALM_APP_ENDPOINT = 'https://data.mongodb-api.com/app/' + REALM_APP_ID + '/endpoint'
-LOG_REQUEST_PATH = '/logRequest'
+# Do not change these:
+APP_PORT = 5001
 
 
-def get_mongo_connection(retry_reads, retry_writes):
-    client = pymongo.MongoClient(CONNECTION_STRING, retryReads=retry_reads, retryWrites=retry_writes)
+app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+is_running = False
+request_log = []
+
+@app.route('/')
+def home():
+    return "Disaster Simulator backend is running..."
+
+@app.route('/start')
+def start():
+    if not is_running:
+        retry_reads = True if request.args.get('retryReads') is None else request.args.get('retryReads') == 'true'
+        retry_writes = True if request.args.get('retryWrites') is None else request.args.get('retryWrites') == 'true'
+        read_preference = 'primary' if request.args.get('readPreference') is None else request.args.get('readPreference')
+        start(retry_reads, retry_writes, read_preference)
+        return jsonify(
+            success=True,
+            msg="Started with retryReads=%s, retryWrites=%s & readPreference=%s" % (retry_reads, retry_writes, read_preference)
+        )
+    else:
+        return jsonify(
+            success=False,
+            msg="Already started"
+        )
+
+# need to send a heartbeat signal each 10 seconds,
+# otherwise it will automatically stop
+@app.route('/continue')
+def keep_running():
+    if is_running:
+        keep_running()
+        return jsonify(
+            success=True,
+            msg="Keep running for another 10 seconds"
+        )
+    else:
+        return jsonify(
+            success=False,
+            msg="Not running"
+        )
+
+@app.route('/stop')
+def stop():
+    if is_running:
+        stop()
+        return jsonify(
+            success=True,
+            msg="Stopped"
+        )
+    else:
+        return jsonify(
+            success=False,
+            msg="Already stopped"
+        )
+
+# returns latest 10 operations
+@app.route('/requestlog')
+def get_request_log():
+    return get_request_log()
+
+@app.route('/hello', methods = ['GET'])
+def db_hello():
+    return db_hello(db)
+
+@app.route('/region', methods = ['GET'])
+def get_region():
+    return get_region()
+
+
+def get_mongo_connection(retry_reads=True, retry_writes=True, read_preference='primary'):
+    client = pymongo.MongoClient(CONNECTION_STRING, retryReads=retry_reads, retryWrites=retry_writes, readPreference=read_preference)
     db = client[DB]
     collection = db[COLLECTION]
     return client, db, collection
 
 
-def find(collection, client, region):
-    def do_find(collection):
-        restaurant_record = collection.aggregate([
-            { "$sample": { "size": 1 }},
-            { "$project": { "_id": 0 }}
-        ])
+def print_with_timestamp(str):
+    now = datetime.now()
+    print('%s: %s' % (now.strftime("%Y-%m-%d %H:%M:%S"), str))
 
-        for doc in restaurant_record:
-            json_restaurant_doc = json.dumps(doc, default=json_util.default)
-        return json_restaurant_doc
+
+def start(retry_reads, retry_writes, read_preference):
+    global client, db, collection
+    client, db, collection = get_mongo_connection(retry_reads, retry_writes, read_preference)
+
+    print_with_timestamp("Started querying with retryReads=%s, retryWrites=%s & readPreference=%s" % (retry_reads, retry_writes, read_preference))
+    global timer
+    timer = Timer(10.0, stop)
+    timer.start()
+
+    global is_running
+    is_running = True
+    global request_log
+    request_log = []
+    while is_running:
+        do_operation('findOne', find, collection, client)
+        do_operation('insertOne', insert, collection, client)
+    store_request_log()
+
+
+def keep_running():
+    global timer
+    timer.cancel()
+    timer = Timer(10.0, stop)
+    timer.start()
+
+
+def stop():
+    print_with_timestamp("Stopped querying...")
+    global timer
+    if timer:
+        timer.cancel()
     
-    return do_operation('find', do_find, collection, client, region)
+    global is_running
+    is_running = False
 
 
-def insert(collection, client, region):
-    def do_insert(collection):
-        insert_record = collection.insert_one(
-            {
-                "address": {
-                "building": "998814",
-                "coord": [-73.74438599999999, 40.72918],
-                "street": "Springfield Blvd",
-                "zipcode": "11427"
-            },
-            "borough": "Queens",
-            "cuisine": "Hamburgers",
-            "grade": "Not Yet Graded",
-            "score": 20
-        })
-        return json.loads(json_util.dumps({ "acknowledged": True, "insertedId": insert_record.inserted_id }))
-    
-    return do_operation('insert', do_insert, collection, client, region)
+def find(collection):
+    collection.aggregate([
+        { "$sample": { "size": 1 }},
+        { "$project": { "_id": 0 }}
+    ])
 
 
-def search(collection, client, region):
-    def do_search(collection):
-        pipeline = [
+def insert(collection):
+    collection.insert_one(
         {
-        "$search": {
-            'text': {
-                    'query': "American",
-                    'path': "cuisine"
-                }
-            },
+            "address": {
+            "building": "998814",
+            "coord": [-73.74438599999999, 40.72918],
+            "street": "Springfield Blvd",
+            "zipcode": "11427"
         },
-        { "$sample": { "size": 1 } },
-        {
-            "$project": {
-            "_id": 0
-            }
-        },
-        ]
+        "borough": "Queens",
+        "cuisine": "Hamburgers",
+        "grade": "Not Yet Graded",
+        "score": 20
+    })
+  
 
-        search_record = collection.aggregate(pipeline)
-        
-        for doc in search_record:
-            json_search_doc = json.dumps(doc, default=json_util.default)
-        return json_search_doc
-    
-    return do_operation('search', do_search, collection, client, region)
-
-
-def do_operation(operation_name, callback, collection, client, region):
+def do_operation(operation_name, operation_fn, collection, client):
     start_time = time.time()
     try:
-        response = callback(collection)
+        # response = operation_fn(collection)
+        operation_fn(collection)
         end_time = time.time()
         latency = int((end_time - start_time) * 1000)
-        log_request(int(time.time()) * 1000, operation_name, latency, True, client, region)
-        return { "latency": latency, "success": True, "response": response }
+        log_request(start_time, operation_name, latency, True, client)
     except Exception as e:
-        log_request(int(time.time()) * 1000, operation_name, time.time() - start_time, False, client, region, e)
-        return { "success": False, "response": e }
+        end_time = time.time()
+        print_with_timestamp("Error while doing %s operation!: %s" % (operation_name, e))
+        log_request(start_time, operation_name, end_time - start_time, False, client, str(e))
 
 
-def log_request(ts, operation_name, latency, success, client, region, err_msg=None):
+def log_request(ts, operation_name, latency, success, client, err_msg=None):
+    new_request_log = {
+        "ts": datetime.fromtimestamp(ts, timezone(timedelta(hours=-4))),
+        "operation": operation_name,
+        "latency": latency,
+        "success": success,
+        "appServerRegion": region,
+        "retryReads": client.options.retry_reads,
+        "retryWrites": client.options.retry_writes,
+        "readPreference": client.options.read_preference.name
+    }
+    if err_msg:
+        new_request_log['errMsg'] = err_msg
+    
+    global request_log
+    request_log.append(new_request_log)
+    if len(request_log) > 99:
+        store_request_log()
+
+
+def store_request_log():
     try:
-        url = REALM_APP_ENDPOINT + LOG_REQUEST_PATH
-        data = {
-            'ts': ts,
-            'operation': operation_name,
-            'latency': latency,
-            'success': success,
-            'appServerRegion': region,
-            # 'appServerUrl': '',
-            'retryReads': client.options.retry_reads,
-            'retryWrites': client.options.retry_writes
-        }
-        if err_msg:
-            data['errMsg'] = err_msg
-        
-        resp = requests.post(url, data = json.dumps(data), headers = {'Content-Type': 'application/json'})
-        if not resp.ok:
-            print ('Log request did not return OK response')
-    except:
-        print('Unexpected error while making request')
+        global request_log
+        db = client['disasterSimulator']
+        collection = db['requestLogs']
+        collection.insert_many(request_log)
+        print_with_timestamp("Saved request logs")
+        request_log = []
+    except Exception as e:
+        print_with_timestamp("Error while inserting request logs!: %s" % e)
+
+
+def get_request_log():
+    global request_log
+    return json.dumps(request_log[-10:], default=str)
 
 
 def db_hello(db):
-    db_hello = db.command("hello")
+    db_hello = db.command('hello')
     return json.loads(json_util.dumps(db_hello))
 
 
 def get_region():
-    stream = os.popen('ec2-metadata -z')
+    stream = os.popen("ec2-metadata -z")
     output = stream.read()
     matches = re.match("placement: (.*?)\\n", output)
     if matches:
         return matches.groups(0)[0]
     else:
-        return None
+        return "Unknown region"
+
+
+if __name__ == '__main__':
+    client, db, collection = get_mongo_connection()
+    region = get_region()
+    
+    app.run(debug=True, host='0.0.0.0', port=APP_PORT)

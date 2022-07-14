@@ -3,6 +3,7 @@
 
 	export let retryReads = true;
   export let retryWrites = true;
+  export let readPreference = 'primary';
   export let realmAppEndpoint;
 </script>
 
@@ -23,7 +24,7 @@
     </label>
   </div>
   <div class="form-floating">
-    <select class="form-select" id="read-preference" aria-label="Read preference">
+    <select class="form-select" id="read-preference" aria-label="Read preference" bind:value={readPreference}>
       <option value="primary" selected>primary</option>
       <option value="primaryPreferred">primaryPreferred</option>
       <option value="secondary">secondary</option>
@@ -33,7 +34,7 @@
       Read preference
     </label>
   </div>
-  <div class="form-floating">
+  <!-- <div class="form-floating">
     <select class="form-select" id="read-concern" aria-label="Read concern">
       <option value="local" selected>local</option>
       <option value="available">available</option>
@@ -52,7 +53,7 @@
     <label for="write-concern">
       Write concern
     </label>
-  </div>
+  </div> -->
 </div>
 
 <style>

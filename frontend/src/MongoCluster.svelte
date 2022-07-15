@@ -4,7 +4,6 @@
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
-  export let realmAppEndpoint
   export let nodes = [];
 
   const INTERVAL = 1000;
@@ -36,7 +35,7 @@
 
 	async function getClusterConfig() {
     try {
-      const res = await fetch(realmAppEndpoint + CLUSTER_DETAILS_PATH);
+      const res = await fetch(appServerEndpoint + CLUSTER_DETAILS_PATH);
       const clusterConfig = await res.json();
       if (clusterConfig && clusterConfig.replicationSpec) {
         for (const region in clusterConfig.replicationSpec) {

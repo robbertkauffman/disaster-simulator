@@ -4,12 +4,12 @@
 	export let retryReads = true;
   export let retryWrites = true;
   export let readPreference = 'primary';
-  export let realmAppEndpoint;
+  export let appServerEndpoint;
 </script>
 
 <div class="controls" role="group" aria-label="simulate failure menu">
   <div class="actions">
-    <TestFailoverButton realmAppEndpoint={realmAppEndpoint}/>
+    <TestFailoverButton appServerEndpoint={appServerEndpoint}/>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" bind:checked={retryReads}>

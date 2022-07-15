@@ -8,17 +8,23 @@ import json
 import os
 import pymongo
 import re
+import requests
+from requests.auth import HTTPDigestAuth
 from threading import Timer
 import time
 
 
 # Change these:
 CONNECTION_STRING = 'mongodb+srv://USERNAME:PASSWORD@CLUSTERNAME.PROJECTHASH.mongodb.net/myFirstDatabase'
-# CONNECTION_STRING = 'mongodb://localhost:27017'
+ATLAS_GROUP_ID = "5beae24579358e0ae95492af"
+ATLAS_CLUSTER_NAME = "MyCluster"
+ATLAS_API_KEY_PUBLIC = "gzxzjpup"
+ATLAS_API_KEY_PRIVATE = "bb07cb94-17e4-40f8-9131-d76359197aa3"
 DB = 'sample_restaurants'
 COLLECTION = 'restaurants'
 # Do not change these:
 APP_PORT = 5001
+ATLAS_API_HOSTNAME_PATH = f'https://cloud.mongodb.com/api/atlas/v1.0/groups/{ATLAS_GROUP_ID}'
 
 
 app = Flask(__name__)
@@ -90,6 +96,18 @@ def db_hello():
 def get_region():
     return get_region()
 
+@app.route('/getClusterDetails', methods = ['GET'])
+def get_cluster_details():
+    return get_cluster_details()
+
+@app.route('/getClusterEvents', methods = ['GET'])
+def get_cluster_events():
+    min_date = request.args.get("minDate", default="", type=str)
+    return get_cluster_events(min_date)
+
+@app.route('/testFailover', methods = ['POST'])
+def test_failover():
+    return test_failover()
 
 def get_mongo_connection(retry_reads=True, retry_writes=True, read_preference='primary'):
     client = pymongo.MongoClient(CONNECTION_STRING, retryReads=retry_reads, retryWrites=retry_writes, readPreference=read_preference)
@@ -226,6 +244,39 @@ def get_region():
         return matches.groups(0)[0]
     else:
         return "Unknown region"
+
+
+def get_cluster_details():
+  resp = requests.get(f'{ATLAS_API_HOSTNAME_PATH}/clusters/{ATLAS_CLUSTER_NAME}', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
+  return resp.json()
+
+
+def test_failover():
+  resp = requests.post(f'{ATLAS_API_HOSTNAME_PATH}/clusters/{ATLAS_CLUSTER_NAME}/restartPrimaries', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
+  return resp.json()
+
+
+def get_cluster_events(min_date):
+  EVENTS = [
+    # "CLUSTER_UPDATE_STARTED",
+    # "CLUSTER_UPDATE_SUBMITTED",
+    # "CLUSTER_UPDATE_COMPLETED",
+    "HOST_RESTARTED",
+    "HOST_ROLLBACK",
+    "SUCCESSFUL_DEPLOY",
+    "PRIMARY_ELECTED",
+    "HOST_NOW_PRIMARY",
+    "HOST_NOW_SECONDARY"
+  ]
+  
+  eventsParam = 'eventType=' + '&eventType='.join(EVENTS)
+  query_params = f'?{eventsParam}'
+  
+  if min_date:
+    query_params += '&minDate=' + min_date
+  
+  resp = requests.get(f'{ATLAS_API_HOSTNAME_PATH}/events{query_params}', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
+  return resp.json()
 
 
 if __name__ == '__main__':

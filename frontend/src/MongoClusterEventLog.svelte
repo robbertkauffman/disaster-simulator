@@ -2,9 +2,9 @@
   import { onDestroy, onMount } from 'svelte';
   import { isRunning } from './store.js';
 
-  export let realmAppEndpoint;
+  export let appServerEndpoint;
 
-  const CLUSTER_EVENTS_PATH = "/getAtlasClusterEvents";
+  const CLUSTER_EVENTS_PATH = "/getClusterEvents";
   const INTERVAL = 10; // in seconds
 
   let events = [];
@@ -33,7 +33,7 @@
 
   async function getAtlasClusterEvents() {  
     try {
-      const url = realmAppEndpoint + CLUSTER_EVENTS_PATH + '?minDate=' + getMinDate();
+      const url = appServerEndpoint + CLUSTER_EVENTS_PATH + '?minDate=' + getMinDate();
       const resp = await fetch(url, { method: 'GET' });
       const data = await resp.json();
       if (resp.ok && data && data.results) {

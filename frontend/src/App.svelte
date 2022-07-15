@@ -9,19 +9,14 @@
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
 	import StartStopButton from './StartStopButton.svelte';
 	
-	const APP_HOSTNAMES = ["http://localhost"];
-	const REALM_APP_ID = "disaster-simulator-jzqql";
-  const REALM_APP_ENDPOINT = `https://data.mongodb-api.com/app/${REALM_APP_ID}/endpoint`;
-	const DEFAULT_PORT = 5001;
 	const API_PATHS = {
 		region: "/region"
 	};
 
 	let appServers = [];
-	let appServerEndpoint = `${APP_HOSTNAMES[0]}:${DEFAULT_PORT}`;
+	let appServerEndpoint = DR_APP_HOSTS[0];
 	let mongoNodes = [];
 	let retryReads, retryWrites, readPreference;
-	let selectedPort = DEFAULT_PORT;
 	let isRunningVal;
 
 	onMount(() => {
@@ -30,13 +25,13 @@
 
 	async function getAppRegions() {
 		const newAppServers = [];
-		for (let hostname of APP_HOSTNAMES) {
+		for (let host of DR_APP_HOSTS) {
 			try {
-				const res = await fetch(hostname + ':' + selectedPort + API_PATHS.region);
+				const res = await fetch(host + API_PATHS.region);
 				const region = await res.text();
 				newAppServers.push({
 					region: region,
-					endpoint: `${hostname}:${selectedPort}`
+					endpoint: host
 				});
 			} catch(e) {
 				console.log(`Fetching app region failed: ${e}`);
@@ -63,7 +58,7 @@
 		</div>
 		<div class="row">
 			<div class="col-2">
-				<Controls bind:retryReads={retryReads} bind:retryWrites={retryWrites} bind:readPreference={readPreference} realmAppEndpoint={REALM_APP_ENDPOINT}/>
+				<Controls bind:retryReads={retryReads} bind:retryWrites={retryWrites} bind:readPreference={readPreference} appServerEndpoint={appServerEndpoint}/>
 			</div>
 			<div class="col-8 topology">
 				<div class="row justify-content-center appserver-row">
@@ -74,11 +69,11 @@
 					{/each}
 				</div>
 				<div class="row justify-content-center">
-					<MongoCluster appServerEndpoint={appServerEndpoint} realmAppEndpoint={REALM_APP_ENDPOINT} bind:nodes={mongoNodes}/>
+					<MongoCluster appServerEndpoint={appServerEndpoint} bind:nodes={mongoNodes}/>
 				</div>
 			</div>
 			<div class="col-2">
-				<MongoClusterEventLog realmAppEndpoint={REALM_APP_ENDPOINT}/>
+				<MongoClusterEventLog appServerEndpoint={appServerEndpoint}/>
 			</div>
 		</div>
 		<div class="row chart-row">

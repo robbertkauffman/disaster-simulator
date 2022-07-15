@@ -3,16 +3,14 @@
   const BUTTON_TEXT_CLICKED = "Initiated regional failover...";
   const TEST_FAILOVER_PATH = "/testFailover";
 
-  export let realmAppEndpoint;
+  export let appServerEndpoint;
 
   let buttonText = DEFAULT_BUTTON_TEXT;
   let isDisabled = false;
 
   async function testFailover() {  
     try {
-      const resp = await fetch(realmAppEndpoint + TEST_FAILOVER_PATH, { method: 'POST' });
-      // const data = await resp.text();
-      // console.log(data);
+      const resp = await fetch(appServerEndpoint + TEST_FAILOVER_PATH, { method: 'POST' });
       if (resp.ok) {
         isDisabled = true;
         buttonText = BUTTON_TEXT_CLICKED

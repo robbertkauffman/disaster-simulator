@@ -1,6 +1,7 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
   import { isRunning } from './store.js';
+  import { getTimestamp } from './main.js'
 
   export let region = 'REGION';
   export let appServerEndpoint;
@@ -40,7 +41,7 @@
   <div class="col">
     <h1 class="display-6">App log — {region.toUpperCase()}</h1>
     {#each requestLog as request}
-      <p class="log {request.success ? 'text-success' : 'text-danger'}"><span>{request.ts}:</span> '{request.operation}' in {request.latency}ms...</p>
+      <p class="log {request.success ? 'text-success' : 'text-danger'}"><span>{getTimestamp(request.ts['$date'])}:</span> '{request.operation}' in {request.latency}ms...</p>
     {/each}
   </div>
 {/if}

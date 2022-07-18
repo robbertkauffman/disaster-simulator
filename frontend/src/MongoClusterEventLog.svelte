@@ -1,6 +1,7 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
   import { isRunning } from './store.js';
+  import { getTimestamp } from './main.js'
 
   export let appServerEndpoint;
 
@@ -42,10 +43,6 @@
     } catch (e) {
       console.log(`Get Atlas Cluster events failed: ${e}`)
     }
-  }
-
-  function getTimestamp() {
-    return new Date().toLocaleString('en-US', { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit'});
   }
 </script>
 

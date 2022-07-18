@@ -7,3 +7,7 @@ const app = new App({
 });
 
 export default app;
+
+export function getTimestamp(date) {
+	return new Date(date).toLocaleString('en-US', { hour: '2-digit', hour12: false, minute: '2-digit', second: '2-digit'});
+};

@@ -49,6 +49,7 @@ def start():
             msg="Started with retryReads=%s, retryWrites=%s & readPreference=%s" % (retry_reads, retry_writes, read_preference)
         )
     else:
+        keep_running()
         return jsonify(
             success=False,
             msg="Already started"

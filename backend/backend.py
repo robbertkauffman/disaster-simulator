@@ -4,7 +4,6 @@ from bson import json_util
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta, timezone
-import json
 import os
 import pymongo
 import re
@@ -20,11 +19,13 @@ ATLAS_GROUP_ID = "5beae24579358e0ae95492af"
 ATLAS_CLUSTER_NAME = "MyCluster"
 ATLAS_API_KEY_PUBLIC = "gzxzjpup"
 ATLAS_API_KEY_PRIVATE = "bb07cb94-17e4-40f8-9131-d76359197aa3"
-DB = 'sample_restaurants'
-COLLECTION = 'restaurants'
+QUERY_DB = 'sample_restaurants'
+QUERY_COLLECTION = 'restaurants'
 # Do not change these:
 APP_PORT = 5001
 ATLAS_API_HOSTNAME_PATH = f'https://cloud.mongodb.com/api/atlas/v1.0/groups/{ATLAS_GROUP_ID}'
+REQUESTLOG_DB = 'disasterSimulator'
+REQUESTLOG_COLLECTION = 'requestLogs'
 
 
 app = Flask(__name__)
@@ -88,6 +89,16 @@ def stop():
 def get_request_log():
     return get_request_log()
 
+@app.route('/getStats', methods = ['GET'])
+def get_stats():
+    min_date = request.args.get("minDate", default="", type=int)
+    if not min_date:
+        return jsonify(
+            success=False,
+            msg="Query parameter minDate not specified"
+        )
+    return get_stats(min_date)
+
 @app.route('/hello', methods = ['GET'])
 def db_hello():
     return db_hello(db)
@@ -111,9 +122,20 @@ def test_failover():
 
 def get_mongo_connection(retry_reads=True, retry_writes=True, read_preference='primary'):
     client = pymongo.MongoClient(CONNECTION_STRING, retryReads=retry_reads, retryWrites=retry_writes, readPreference=read_preference)
-    db = client[DB]
-    collection = db[COLLECTION]
+    db = {
+        'query': client[QUERY_DB],
+        'requestLog': client[REQUESTLOG_DB]
+    }
+    collection = {
+        'query': db['query'][QUERY_COLLECTION],
+        'requestLog': db['requestLog'][REQUESTLOG_COLLECTION]
+    }
     return client, db, collection
+
+
+def create_indexes(collection):
+    collection.create_index([("ts", pymongo.ASCENDING), ("latency", pymongo.ASCENDING)])
+    collection.create_index([("ts", pymongo.ASCENDING), ("success", pymongo.ASCENDING)])
 
 
 def print_with_timestamp(str):
@@ -135,8 +157,8 @@ def start(retry_reads, retry_writes, read_preference):
     global request_log
     request_log = []
     while is_running:
-        do_operation('findOne', find, collection, client)
-        do_operation('insertOne', insert, collection, client)
+        do_operation('findOne', find, collection['query'], client)
+        do_operation('insertOne', insert, collection['query'], client)
     store_request_log()
 
 
@@ -216,10 +238,8 @@ def log_request(ts, operation_name, latency, success, client, err_msg=None):
 
 def store_request_log():
     try:
-        global request_log
-        db = client['disasterSimulator']
-        collection = db['requestLogs']
-        collection.insert_many(request_log)
+        global request_log, collection
+        collection['requestLog'].insert_many(request_log)
         print_with_timestamp("Saved request logs")
         request_log = []
     except Exception as e:
@@ -228,12 +248,24 @@ def store_request_log():
 
 def get_request_log():
     global request_log
-    return json.dumps(request_log[-10:], default=str)
+    return json_util.dumps(request_log[-10:])
 
+
+def get_stats(min_date):
+    stats = list(collection['requestLog'].aggregate([
+        { "$match": { "ts": { "$gt": datetime.fromtimestamp(min_date / 1000, timezone(timedelta(hours=-4))) } } },
+        { "$group": { "_id": None, "avg": { "$avg": "$latency" }, "max": { "$max": "$latency" } } }
+    ]))
+    
+    if len(stats) > 0:
+        return json_util.dumps(stats[0])
+    else:
+        return '{}'
+    
 
 def db_hello(db):
-    db_hello = db.command('hello')
-    return json.loads(json_util.dumps(db_hello))
+    db_hello = db['query'].command('hello')
+    return json_util.dumps(db_hello)
 
 
 def get_region():
@@ -281,6 +313,7 @@ def get_cluster_events(min_date):
 
 if __name__ == '__main__':
     client, db, collection = get_mongo_connection()
+    create_indexes(collection['requestLog'])
     region = get_region()
     
     app.run(debug=True, host='0.0.0.0', port=APP_PORT)

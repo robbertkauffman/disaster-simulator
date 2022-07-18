@@ -8,6 +8,7 @@
 	import MongoCluster from './MongoCluster.svelte';
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
 	import StartStopButton from './StartStopButton.svelte';
+	import Stats from './Stats.svelte';
 	
 	const API_PATHS = {
 		region: "/region"
@@ -18,6 +19,7 @@
 	let mongoNodes = [];
 	let retryReads, retryWrites, readPreference;
 	let isRunningVal;
+	let startDate;
 
 	onMount(() => {
 		getAppRegions();
@@ -45,6 +47,9 @@
 
 	isRunning.subscribe(value => {
 		isRunningVal = value;
+		if (value) {
+			startDate = new Date();
+		}
 	});
 </script>
 
@@ -76,9 +81,14 @@
 				<MongoClusterEventLog appServerEndpoint={appServerEndpoint}/>
 			</div>
 		</div>
+		<div class="row">
+			{#if isRunningVal}
+				<Stats appServerEndpoint={appServerEndpoint} startDate={startDate}/>
+			{/if}
+		</div>
 		<div class="row chart-row">
 			{#if isRunningVal}
-				<Charts/>
+				<Charts startDate={startDate}/>
 			{/if}
 		</div>
 		<div class="row">

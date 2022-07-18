@@ -2,6 +2,8 @@
   import ChartsEmbedSDK from '@mongodb-js/charts-embed-dom';
   import { onMount } from 'svelte';  
 
+  export let startDate = new Date();
+
   onMount(async () => {
 		createDashboard();
 	});
@@ -15,7 +17,7 @@
       const chart = sdk.createChart({
         chartId: chartId.id,
         height: "300px",
-        filter: { ts: { $gt: new Date() }},
+        filter: { ts: { $gt: startDate }},
         maxDataAge: 10,
         showAttribution: false
       });

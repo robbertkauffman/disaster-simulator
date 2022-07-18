@@ -81,7 +81,7 @@
 				<MongoClusterEventLog appServerEndpoint={appServerEndpoint}/>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row justify-content-md-center">
 			{#if isRunningVal}
 				<Stats appServerEndpoint={appServerEndpoint} startDate={startDate}/>
 			{/if}
@@ -102,6 +102,10 @@
 </main>
 
 <style>
+	main {
+		margin-bottom: 25px;
+	}
+
 	.header-row {
 		margin-top: 30px;
 		margin-bottom: 30px;

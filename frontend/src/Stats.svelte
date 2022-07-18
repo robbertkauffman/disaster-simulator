@@ -38,13 +38,13 @@
 
 {#if stats}
   {#if stats.avg}
-  <div class="col">
+  <div class="col col-lg-2">
     <p>Average latency:</p>
     <p class="h5">{parseFloat(stats.avg).toFixed(2)} ms</p>
   </div>
   {/if}
   {#if stats.max}
-  <div class="col">
+  <div class="col col-lg-2">
     <p>Max latency:</p>
     <p class="h5">{stats.max} ms</p>
   </div>
@@ -53,4 +53,5 @@
 
 <style>
   .col { margin: 50px 0 25px; }
+  .col p { text-align: center; }
 </style>

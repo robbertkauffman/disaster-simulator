@@ -3,7 +3,7 @@
   import { isRunning, isTestingFailover } from './store';
 
   export let type;
-	export let region = 'REGION';
+	export let region;
   export let isNewPrimary = false;
   export let iconElm = undefined;
 
@@ -33,7 +33,7 @@
 <div class="col-3 text-center">
   <figure class="figure" class:blink={type === 'Primary' && $isTestingFailover}>
     <img src="img/{getImagePath(type)}" class="figure-img" alt="{type} node" bind:this={iconElm} />
-    <figcaption class="figure-caption">{type} — {region}</figcaption>
+    <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
   </figure>
   {#if $isRunning && isNewPrimary}
     <p out:fade="{{delay: 10000, duration: 5000}}">Elected as new primary!</p>

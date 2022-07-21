@@ -68,7 +68,7 @@
 			<div class="col-8 topology">
 				<div class="row justify-content-center appserver-row">
 					{#each appServers as app}
-						{#if app.endpoint && app.region}
+						{#if app.endpoint}
 							<AppServer region={app.region} mongoNodes={mongoNodes}/>
 						{/if}
 					{/each}

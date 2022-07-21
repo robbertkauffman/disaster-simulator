@@ -1,7 +1,7 @@
 <script>
   import { afterUpdate } from 'svelte';
 
-	export let region = 'REGION';
+	export let region;
   export let mongoNodes;
 
   let appServerIconElm;
@@ -35,7 +35,7 @@
 
 <div class="col-3 text-center">
   <figure class="figure">
-    <figcaption class="figure-caption text-center">App server — {region.toUpperCase()}</figcaption>
+    <figcaption class="figure-caption text-center">App server {#if region} — {region.toUpperCase()}{/if}</figcaption>
     <img src="img/appserver.png" class="figure-img" alt="appserver" bind:this={appServerIconElm}/>
   </figure>
 </div>

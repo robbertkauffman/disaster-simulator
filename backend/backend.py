@@ -276,6 +276,7 @@ def rs_status(client):
     return json_util.dumps(rs_status)
 
 
+# only works for AWS EC2
 def get_region():
     stream = os.popen("ec2-metadata -z")
     output = stream.read()
@@ -283,7 +284,7 @@ def get_region():
     if matches:
         return matches.groups(0)[0]
     else:
-        return "Unknown region"
+        return ""
 
 
 def test_failover():

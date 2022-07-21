@@ -3,7 +3,6 @@
 
 	export let region = 'REGION';
   export let mongoNodes;
-  export let readPreference = 'primary';
 
   let appServerIconElm;
   let topologyLine;
@@ -14,7 +13,7 @@
 
   function drawAppTopologyLines() {
     if (mongoNodes.length > 1 ) {
-      const idx = mongoNodes.findIndex(node => node.type.toLowerCase() === readPreference);
+      const idx = mongoNodes.findIndex(node => node.connectedToApp);
       if (idx !== -1 && mongoNodes[idx].iconElm) {
         const newTopologyLine = new LeaderLine(
           appServerIconElm,
@@ -39,8 +38,6 @@
     <figcaption class="figure-caption text-center">App server — {region.toUpperCase()}</figcaption>
     <img src="img/appserver.png" class="figure-img" alt="appserver" bind:this={appServerIconElm}/>
   </figure>
-  <!-- <button type="button" class="btn btn-secondary simulate-partition" id="simulate-partition-a" data-bs-toggle="tooltip" 
-      data-bs-placement="top" title="Simulate network partition in this region">X</button> -->
 </div>
 
 <style>

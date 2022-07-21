@@ -1,6 +1,6 @@
 <script>
 	import { afterUpdate, onDestroy, onMount } from 'svelte';
-  import { isRunning } from './store.js';
+  import { isRunning, isTestingFailover } from './store.js';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
@@ -19,9 +19,10 @@
 
   onDestroy(() => {
     clearInterval(getNodeTypesInterval);
+    unsubscribe;
   });
 
-  isRunning.subscribe(value => {
+  const unsubscribe = isRunning.subscribe(value => {
 		if (value) {
       // do dbHello each second so that the node types get updated after a failover
       getNodeTypesInterval = setInterval(getNodeTypes, INTERVAL);
@@ -39,7 +40,7 @@
       const clusterConfig = await res.json();
       if (clusterConfig && clusterConfig.replicationSpec) {
         for (const region in clusterConfig.replicationSpec) {
-          nodes = [...nodes, { region: region, type: 'Secondary'}];
+          nodes = [...nodes, { region: region, connectedToApp: false }];
         }
       }
       getNodeTypes();
@@ -54,10 +55,26 @@
       const dbHello = await res.json();
       if (dbHello && dbHello.tags && dbHello.tags.region && dbHello.me === dbHello.primary) {
         const idx = nodes.findIndex(node => node.region === dbHello.tags.region);
+        // find primary
         if (idx !== -1 && nodes[idx].type !== 'Primary' && nodes[idx].host !== dbHello.me) {
-          nodes.forEach(node => node.type = 'Secondary');
+          const oldType = nodes[idx].type;
+          // reset all nodes to secondary
+          nodes.forEach((node, i) => {
+            if (i !== idx) {
+              node.type = 'Secondary'
+              node.isNewPrimary = false;
+              node.connectedToApp = false;
+            }
+          });
+          // set primary node
           nodes[idx].type = 'Primary';
           nodes[idx].host = dbHello.me;
+          nodes[idx].connectedToApp = true;
+          // new primary was elected
+          if (oldType === 'Secondary') {
+            isTestingFailover.set(false);
+            nodes[idx].isNewPrimary = true;
+          }
         }
       } else {
         console.log(`Could not determine primary. Connected to: ${dbHello.me}`)
@@ -90,5 +107,5 @@
 </script>
 
 {#each nodes as node}
-  <MongoNode type={node.type} region={node.region} bind:iconElm={node.iconElm}/>
+  <MongoNode type={node.type} region={node.region} isNewPrimary={node.isNewPrimary} bind:iconElm={node.iconElm}/>
 {/each}

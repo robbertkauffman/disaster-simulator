@@ -100,17 +100,17 @@ def get_stats():
         )
     return get_stats(min_date)
 
-@app.route('/hello', methods = ['GET'])
-def db_hello():
-    return db_hello(db)
+@app.route('/rsConfig', methods = ['GET'])
+def rs_config():
+    return rs_config(client)
+
+@app.route('/rsStatus', methods = ['GET'])
+def rs_status():
+    return rs_status(client)
 
 @app.route('/region', methods = ['GET'])
 def get_region():
     return get_region()
-
-@app.route('/getClusterDetails', methods = ['GET'])
-def get_cluster_details():
-    return get_cluster_details()
 
 @app.route('/getClusterEvents', methods = ['GET'])
 def get_cluster_events():
@@ -262,11 +262,18 @@ def get_stats(min_date):
         return json_util.dumps(stats[0])
     else:
         return '{}'
-    
 
-def db_hello(db):
-    db_hello = db['query'].command('hello')
-    return json_util.dumps(db_hello)
+
+def rs_config(client):
+    db = client['local']
+    coll = db['system.replset']
+    rs_conf = coll.find_one()
+    return json_util.dumps(rs_conf)
+
+
+def rs_status(client):
+    rs_status = client.admin.command('replSetGetStatus')
+    return json_util.dumps(rs_status)
 
 
 def get_region():
@@ -277,11 +284,6 @@ def get_region():
         return matches.groups(0)[0]
     else:
         return "Unknown region"
-
-
-def get_cluster_details():
-  resp = requests.get(f'{ATLAS_API_HOSTNAME_PATH}/clusters/{ATLAS_CLUSTER_NAME}', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
-  return resp.json()
 
 
 def test_failover():

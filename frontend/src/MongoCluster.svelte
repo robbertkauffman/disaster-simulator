@@ -7,8 +7,8 @@
   export let nodes = [];
 
   const INTERVAL = 1000;
-  const CLUSTER_DETAILS_PATH = "/getClusterDetails";
-  const DB_HELLO_PATH = "/hello";
+  const RS_CONFIG_PATH = "/rsConfig";
+  const RS_STATUS_PATH = "/rsStatus";
 
   let getNodeTypesInterval;
   let hasTopologyLinesDrawn = false;
@@ -24,7 +24,7 @@
 
   const unsubscribe = isRunning.subscribe(value => {
 		if (value) {
-      // do dbHello each second so that the node types get updated after a failover
+      // run rs.status() each second so that the node types get updated after a failover
       getNodeTypesInterval = setInterval(getNodeTypes, INTERVAL);
     } else {
       clearInterval(getNodeTypesInterval);
@@ -36,11 +36,19 @@
 
 	async function getClusterConfig() {
     try {
-      const res = await fetch(appServerEndpoint + CLUSTER_DETAILS_PATH);
-      const clusterConfig = await res.json();
-      if (clusterConfig && clusterConfig.replicationSpec) {
-        for (const region in clusterConfig.replicationSpec) {
-          nodes = [...nodes, { region: region, connectedToApp: false }];
+      const res = await fetch(appServerEndpoint + RS_CONFIG_PATH);
+      const rsConfig = await res.json();
+      if (rsConfig && rsConfig.members && rsConfig.members.length > 0) {
+        for (const node of rsConfig.members) {
+          // only display electable nodes
+          if (node.priority !== 0) {
+            // Atlas clusters have auto-populated tags, but non-Atlas clusters usually don't
+            if (node.tags && node.tags.region) {
+              nodes = [...nodes, { host: node.host, region: node.tags.region, connectedToApp: false }];
+            } else {
+              nodes = [...nodes, { host: node.host, connectedToApp: false }];
+            }
+          }
         }
       }
       getNodeTypes();
@@ -51,37 +59,41 @@
 
   async function getNodeTypes() {
     try {
-      const res = await fetch(appServerEndpoint + DB_HELLO_PATH)
-      const dbHello = await res.json();
-      if (dbHello && dbHello.tags && dbHello.tags.region && dbHello.me === dbHello.primary) {
-        const idx = nodes.findIndex(node => node.region === dbHello.tags.region);
-        // find primary
-        if (idx !== -1 && nodes[idx].type !== 'Primary' && nodes[idx].host !== dbHello.me) {
-          const oldType = nodes[idx].type;
-          // reset all nodes to secondary
-          nodes.forEach((node, i) => {
-            if (i !== idx) {
-              node.type = 'Secondary'
-              node.isNewPrimary = false;
-              node.connectedToApp = false;
+      const res = await fetch(appServerEndpoint + RS_STATUS_PATH)
+      const rsStatus = await res.json();
+      if (rsStatus && rsStatus.members) {
+        const primary = rsStatus.members.find(member => member.stateStr === 'PRIMARY');
+        if (primary && primary.name) {
+          const idx = nodes.findIndex(node => node.host === primary.name);
+          // find primary
+          if (idx !== -1 && nodes[idx].type !== 'Primary') {
+            const oldType = nodes[idx].type;
+            // reset all nodes except current primary to secondary
+            nodes.forEach((node, i) => {
+              if (i !== idx) {
+                node.type = 'Secondary'
+                node.isNewPrimary = false;
+                node.connectedToApp = false;
+              }
+            });
+            // set primary node
+            nodes[idx].type = 'Primary';
+            nodes[idx].connectedToApp = true;
+            // new primary was elected
+            if (oldType === 'Secondary') {
+              isTestingFailover.set(false);
+              nodes[idx].isNewPrimary = true;
             }
-          });
-          // set primary node
-          nodes[idx].type = 'Primary';
-          nodes[idx].host = dbHello.me;
-          nodes[idx].connectedToApp = true;
-          // new primary was elected
-          if (oldType === 'Secondary') {
-            isTestingFailover.set(false);
-            nodes[idx].isNewPrimary = true;
           }
+        } else {
+          console.log(`Error! Could not determine primary`);
         }
       } else {
-        console.log(`Could not determine primary. Connected to: ${dbHello.me}`)
+        console.log(`Error! Could not determine primary`);
       }
       drawClusterTopologyLines();
     } catch(e) {
-      console.log(`Fetching output of db hello command failed: ${e}`);
+      console.log(`Fetching output of rs.status() command failed: ${e}`);
     }
   }
 

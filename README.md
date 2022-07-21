@@ -1,56 +1,61 @@
 # Disaster Simulator
-While rare, cloud provider's outages do happen and sometimes it can have detrimental impact on their users from a whole region. Just in late 2021 AWS had [US-WEST-1, US-WEST-2, and US-EAST-1 had netowrk problems that lasted hours](https://awsmaniac.com/aws-outages/). In these situations, the usual replica set deployment that is resilient to an availability zone fail will not be sufficient. MongoDB Atlas has the ability to not only go regional (partial or full) outage, but also a full cloud provider outage if it ever occurs. This project will demonstrate if any kinf of diaster were to struck these nodes in a region, how Atlas will be able to withstand such an event.
+MongoDB has an excellent and fast failover process compared to other databases, thanks to its distributed and modern architecture. And with retryable reads & writes the impact of a failover to the application is kept to a minimum. Demonstrating the failover speed is easy using the [Test Failover](https://www.mongodb.com/docs/atlas/tutorial/test-failover/) functionality of Atlas. However, it is a bit more tricky to show the impact of a failover to the application, and more precisely how the operation latency increases or operations fail depending on whether retryable reads & writes are used.
+
+The Disaster Simulator is a demo to show the impact of database failovers to the application, specifically the operation latency and success/failure of operations (in case retryable reads & writes are disabled).
+
+![Screenshot of Disaster Simulator](/screenshot.png)
 
 ## Requirements
+- Atlas cluster
 - Python 3.x
-- (if building the front-end): Node
+- Optional: Atlas Charts
+- Optional: Node (when building the front-end instead of using the supplied prebuilt front-end)
 
 ## Instructions
 ### Atlas
 1. Create a dedicated Atlas cluster (e.g. M10 across 3 regions with 1 node in each to simulate multi-region failovers)
-2. Load Sample Data
-3. Create an API Key for your Atlas Project with *Project Owner* access and whitelist the IP(s) of the machine(s) running the back-end
-4. Add the public IP address(es) of the machine(s) that will be running the back-end to the IP Access List of your Atlas Project, or allow access from anywhere
-5. Configure Charts:
-  - Add a Data Source for the namespace *disasterSimulator.requestLogs*. If you don't see the namespace listed, manually create the database and collection via the *Atlas Data Explorer*
-  - Import the included dashboard *disaster-simulator.charts*
+2. [Load Sample Data](https://www.mongodb.com/docs/atlas/sample-data/#load-sample-data-1)
+3. [Create an API Key](https://www.mongodb.com/docs/atlas/configure-api-access/#create-an-api-key-for-a-project) for your Atlas Project with *Project Owner* access and add the IP(s) of the machine(s) running the back-end to the *API Access List*
+4. Add the public IP address(es) of the machine(s) that will be running the back-end to the [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/) of your Atlas Project, or *Allow access from anywhere*
+5. Optional: Configure Charts:
+  - [Add a Data Source](https://www.mongodb.com/docs/charts/data-sources/#add-a-data-source) for the namespace *disasterSimulator.requestLogs*. If you don't see the namespace listed, manually create the database and collection via the [Atlas Data Explorer](https://www.mongodb.com/docs/cloud-manager/data-explorer/databases-collections/#create-a-database)
+  - [Import the included dashboard](https://www.mongodb.com/docs/charts/dashboards/#import-a-dashboard-from-a-file): *disaster-simulator.charts*
+  - [Enable Unauthenticated Embedding for a Chart](https://www.mongodb.com/docs/charts/embed-chart-anon-auth/#enable-unauthenticated-embedding-for-a-chart) by clicking *Embed Chart* in the context menu of one of the imported charts, and enable external sharing of the data source with *Unauthenticated access*. Then, select *Javascript SDK* as *Method* to obtain the *Base URL* and *Chart ID*. Copy & paste these values for reference later. Finally, copy the *Chart ID* of the second chart as well.
 
 ### Back-end & front-end
 1. Install the required Python 3 modules: 
   ```shell
-  pip3 install backend/requirements.txt
+  pip3 install -r backend/requirements.txt
   ```
-2. Open `backend/backend.py` in an editor and change the values of the following variables (lines 18-24):
+2. Open `backend/server.py` in an editor and change the values of the following variables (lines 17-23):
   - *CONNECTION_STRING*: connection string of your MongoDB cluster containing username & password
-  - *ATLAS_GROUP_ID*: Atlas Project/Group ID. Can be obtained from the URL
+  - *ATLAS_GROUP_ID*: [Atlas Project/Group ID](https://www.mongodb.com/docs/atlas/app-services/reference/find-your-project-or-app-id/#find-your-project-or-app-id)
   - *ATLAS_CLUSTER_NAME*: Name of the Atlas cluster
   - *ATLAS_API_KEY_PUBLIC*: Atlas Public API key
   - *ATLAS_API_KEY_PRIVATE*: Atlas Private API key
-  - (Optional) *DB*: if using something other than sample data
-  - (Optional) *COLLECTION*: if using something other than sample data
+  - (Optional) *QUERY_DB*: if querying something other than sample data
+  - (Optional) *QUERY_COLLECTION*: if querying something other than sample data
 3. Run the back-end:
   ```shell
-  cd backend
-  python3 backend.py
+  python3 backend/server.py
   ```
 4. Open `frontend/public/index.html` in an editor and change the values of the following variables (lines 16-21):
   - *DR_APP_HOSTS*: list of hosts (hostname + port) that are running the back-end. No need to change if running back-end from your local machine
-  - *DR_CHART_BASE_URL*: base URL of your Atlas Charts instance
-  - *DR_CHART_IDS*: chart IDs of the two configured charts
+  - (Optional) *DR_CHART_BASE_URL*: base URL of your Atlas Charts instance
+  - (Optional) *DR_CHART_IDS*: chart IDs of the two imported charts
 4. Run the front-end:
   ```shell
   cd frontend/public
-  python3 -m http.server
+  python3 -m http.server 8080
   ```
-5. Access the front-end in your browser via the URL: *http://localhost:8000*
+5. Access the front-end in your browser via the URL: *http://localhost:8080*
 
 ### (Optional): Building the front-end
-The front-end is built in [Svelte](https://svelte.dev/). In case you want to make changes, you can build the front-end as follows:
+The front-end is built in [Svelte](https://svelte.dev/). In case you want to make changes to the front-end, you can build it as follows:
 1. [Download & install Node](https://nodejs.org/en/download/) if you haven't already
 2. Navigate to the `frontend` folder and run `npm install` to install all dependencies
-3. Update *APP_HOSTNAMES* in `frontend/src/App.svelte`
-4. Run `npm run dev`
+3. Run `npm run dev`
 
 ## Credits
-Many thanks to the original contributors of the SA Hackathon that helped built the first version of the project:
+Many thanks to the original contributors of the SA Hackathon that built the initial version of the project:
 Patho Bardhan, Shawn Chai, Jake Cosme, Joseph Hansen, Robbert Kauffman, Timothy Marland, Marianne Myers

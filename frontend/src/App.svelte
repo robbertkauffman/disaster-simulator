@@ -48,7 +48,10 @@
 	isRunning.subscribe(value => {
 		isRunningVal = value;
 		if (value) {
+			// use start date 3 seconds from now
+			// to remove an initial peak in latency when the app initaties connection to the cluster
 			startDate = new Date();
+			startDate.setSeconds(startDate.getSeconds() + 3);
 		}
 	});
 </script>

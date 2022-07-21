@@ -1,7 +1,7 @@
 <script>
   import { isTestingFailover } from './store';
   const DEFAULT_BUTTON_TEXT = "Test failover";
-  const BUTTON_TEXT_CLICKED = "Initiated regional failover...";
+  const BUTTON_TEXT_CLICKED = "Initiated failover...";
   const TEST_FAILOVER_PATH = "/testFailover";
 
   export let appServerEndpoint;

@@ -12,12 +12,20 @@ The Disaster Simulator is a demo to show the impact of database failovers to the
 - Optional: Node (when building the front-end instead of using the supplied prebuilt front-end)
 
 ## Instructions
+### MongoDB Cluster
+```shell
+podman-compose up
+export DOCKER_HOST='unix:///Users/robbert.kauffman/.local/share/containers/podman/machine/podman-machine-default/podman.sock'
+```
+Check if you can access the cluster and it has been initialized successfully:
+```shell
+mongosh localhost:27017 --eval 'rs.status()'
+```
+
 ### Atlas
-1. Create a dedicated Atlas cluster (e.g. M10 across 3 regions with 1 node in each to simulate multi-region failovers)
-2. [Load Sample Data](https://www.mongodb.com/docs/atlas/sample-data/#load-sample-data-1)
-3. [Create an API Key](https://www.mongodb.com/docs/atlas/configure-api-access/#create-an-api-key-for-a-project) for your Atlas Project with *Project Owner* access and add the IP(s) of the machine(s) running the back-end to the *API Access List*
-4. Add the public IP address(es) of the machine(s) that will be running the back-end to the [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/) of your Atlas Project, or *Allow access from anywhere*
-5. Optional: Configure Charts:
+1. Create a Atlas cluster that will store the request log data which will be visualized using Charts
+2. Add the public IP address(es) of the machine(s) that will be running the back-end to the [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/) of your Atlas Project, or *Allow access from anywhere*
+3. Configure Charts:
   - [Add a Data Source](https://www.mongodb.com/docs/charts/data-sources/#add-a-data-source) for the namespace *disasterSimulator.requestLogs*. If you don't see the namespace listed, manually create the database and collection via the [Atlas Data Explorer](https://www.mongodb.com/docs/cloud-manager/data-explorer/databases-collections/#create-a-database)
   - [Import the included dashboard](https://www.mongodb.com/docs/charts/dashboards/#import-a-dashboard-from-a-file): *disaster-simulator.charts*
   - [Enable Unauthenticated Embedding for a Chart](https://www.mongodb.com/docs/charts/embed-chart-anon-auth/#enable-unauthenticated-embedding-for-a-chart) by clicking *Embed Chart* in the context menu of one of the imported charts, and enable external sharing of the data source with *Unauthenticated access*. Then, select *Javascript SDK* as *Method* to obtain the *Base URL* and *Chart ID*. Copy & paste these values for reference later. Finally, copy the *Chart ID* of the second chart as well.
@@ -29,10 +37,6 @@ The Disaster Simulator is a demo to show the impact of database failovers to the
   ```
 2. Open `backend/server.py` in an editor and change the values of the following variables (lines 17-23):
   - *CONNECTION_STRING*: connection string of your MongoDB cluster containing username & password
-  - *ATLAS_GROUP_ID*: [Atlas Project/Group ID](https://www.mongodb.com/docs/atlas/app-services/reference/find-your-project-or-app-id/#find-your-project-or-app-id)
-  - *ATLAS_CLUSTER_NAME*: Name of the Atlas cluster
-  - *ATLAS_API_KEY_PUBLIC*: Atlas Public API key
-  - *ATLAS_API_KEY_PRIVATE*: Atlas Private API key
   - (Optional) *QUERY_DB*: if querying something other than sample data
   - (Optional) *QUERY_COLLECTION*: if querying something other than sample data
 3. Run the back-end:

@@ -1,4 +1,4 @@
-pymongo[srv]
+pymongo
 flask
 flask_cors
-requests
+docker

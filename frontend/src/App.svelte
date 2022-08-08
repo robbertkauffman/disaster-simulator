@@ -17,7 +17,6 @@
 	let appServers = [];
 	let appServerEndpoint = DR_APP_HOSTS[0];
 	let mongoNodes = [];
-	let retryReads, retryWrites, readPreference;
 	let isRunningVal;
 	let startDate;
 
@@ -61,12 +60,11 @@
 		<div class="row header-row">
 			<div class="col text-center">
 				<h1>Disaster Simulator&reg;</h1>
-				<StartStopButton appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-2">
-				<Controls bind:retryReads={retryReads} bind:retryWrites={retryWrites} bind:readPreference={readPreference} appServerEndpoint={appServerEndpoint}/>
+				<Controls appServerEndpoint={appServerEndpoint}/>
 			</div>
 			<div class="col-8 topology">
 				<div class="row justify-content-center appserver-row">

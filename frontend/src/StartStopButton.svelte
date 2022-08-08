@@ -89,6 +89,7 @@
     margin-top: 10px;
     background-color: forestgreen;
     border-color: forestgreen;
+    width: 100%;
   }
 
   button:hover {

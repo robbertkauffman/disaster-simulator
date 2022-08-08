@@ -1,5 +1,5 @@
 <script>
-  import TestFailoverButton from "./TestFailoverButton.svelte";
+  import StartStopButton from "./StartStopButton.svelte";
 
 	export let retryReads = true;
   export let retryWrites = true;
@@ -9,7 +9,7 @@
 
 <div class="controls" role="group" aria-label="simulate failure menu">
   <div class="actions">
-    <TestFailoverButton appServerEndpoint={appServerEndpoint}/>
+    <StartStopButton appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" bind:checked={retryReads}>
@@ -65,27 +65,9 @@
     margin-bottom: 10px;
   }
 
-  div.controls :global(button) {
-    display: block;
-    margin-bottom: 5px;
-    background-color: indianred;
-    border-color: indianred;
-    width: 100%;
-  }
-
-  div.controls :global(button:hover) {
-    background-color: darkred;
-    border-color: darkred;
-  }
-
-  div.controls :global(button.btn-primary:disabled) {
-    background-color: darkslategray;
-    border-color: darkslategray;
-  }
-
   .form-check-input:checked {
-    background-color: indianred;
-    border-color: indianred;
+    background-color: forestgreen;
+    border-color: forestgreen;
   }
 
   .form-floating {

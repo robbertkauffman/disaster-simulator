@@ -15,14 +15,14 @@
   });
 
   onDestroy(() => {
-    clearInterval(requestInterval);
+    // clearInterval(requestInterval);
   });
 
   isRunning.subscribe(value => {
 		if (value) {
-      requestInterval = setInterval(getAtlasClusterEvents, INTERVAL * 1000);
+      // requestInterval = setInterval(getAtlasClusterEvents, INTERVAL * 1000);
     } else {
-      clearInterval(requestInterval);
+      // clearInterval(requestInterval);
     }
 	});
 

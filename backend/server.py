@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
 
 from bson import json_util
+import docker
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta, timezone
 import os
 import pymongo
 import re
-import requests
-from requests.auth import HTTPDigestAuth
 from threading import Timer
 import time
+from werkzeug.exceptions import BadRequest
 
 
 # Change these:
-CONNECTION_STRING = 'mongodb+srv://USERNAME:PASSWORD@CLUSTERNAME.PROJECTHASH.mongodb.net/myFirstDatabase'
-ATLAS_GROUP_ID = "5beae24579358e0ae95492af"
-ATLAS_CLUSTER_NAME = "MyCluster"
-ATLAS_API_KEY_PUBLIC = "gzxzjpup"
-ATLAS_API_KEY_PRIVATE = "bb07cb94-17e4-40f8-9131-d76359197aa3"
+CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet'
 QUERY_DB = 'sample_restaurants'
 QUERY_COLLECTION = 'restaurants'
 # Do not change these:
 APP_PORT = 5001
-ATLAS_API_HOSTNAME_PATH = f'https://cloud.mongodb.com/api/atlas/v1.0/groups/{ATLAS_GROUP_ID}'
 REQUESTLOG_DB = 'disasterSimulator'
-REQUESTLOG_COLLECTION = 'requestLogs'
+REQUESTLOG_COLLECTION = 'requestLog'
+CONTAINER_NETWORK_NAME = 'containers_mongoCluster'
 
 
 app = Flask(__name__)
@@ -112,14 +108,43 @@ def rs_status():
 def get_region():
     return get_region()
 
-@app.route('/getClusterEvents', methods = ['GET'])
-def get_cluster_events():
-    min_date = request.args.get("minDate", default="", type=str)
-    return get_cluster_events(min_date)
+@app.route('/stepDown', methods = ['POST'])
+def step_down():
+    step_down_primary()
+    return jsonify(success=True)
 
-@app.route('/testFailover', methods = ['POST'])
-def test_failover():
-    return test_failover()
+@app.route('/killNode', methods = ['POST'])
+def kill_node():
+    success = parse_body('containerName', request, kill_node)
+    return jsonify(success=success)
+
+@app.route('/startNode', methods = ['POST'])
+def start_node():
+    success = parse_body('containerName', request, start_node)
+    return jsonify(success=success)
+
+@app.route('/disconnectNode', methods = ['POST'])
+def disconnect_node():
+    success = parse_body('containerName', request, disconnect_node)
+    return jsonify(success=success)
+
+@app.route('/reconnectNode', methods = ['POST'])
+def reconnect_node():
+    success = parse_body('containerName', request, reconnect_node)
+    return jsonify(success=success)
+
+def parse_body(param, request, callback_fn):
+    try:
+        params = request.get_json()
+        if not params or not params[param]:
+            return jsonify(
+                success=False,
+                msg="%s not specified in request body" % param
+            )
+        return callback_fn(params[param])
+    except BadRequest:
+        print_with_timestamp("Error! Could not parse request body as JSON: %" % request.data)
+
 
 def get_mongo_connection(retry_reads=True, retry_writes=True, read_preference='primary'):
     client = pymongo.MongoClient(CONNECTION_STRING, retryReads=retry_reads, retryWrites=retry_writes, readPreference=read_preference)
@@ -224,9 +249,9 @@ def log_request(ts, operation_name, latency, success, client, err_msg=None):
         "latency": latency,
         "success": success,
         "appServerRegion": region,
-        "retryReads": client.options.retry_reads,
-        "retryWrites": client.options.retry_writes,
-        "readPreference": client.options.read_preference.name
+        "retryReads": client.retry_reads,
+        "retryWrites": client.retry_writes,
+        "readPreference": client.read_preference.name
     }
     if err_msg:
         new_request_log['errMsg'] = err_msg
@@ -287,37 +312,67 @@ def get_region():
         return ""
 
 
-def test_failover():
-  resp = requests.post(f'{ATLAS_API_HOSTNAME_PATH}/clusters/{ATLAS_CLUSTER_NAME}/restartPrimaries', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
-  return resp.json()
+def step_down_primary():
+    try:
+        client.admin.command('replSetStepDown', 100)
+    except pymongo.errors.AutoReconnect:
+        print_with_timestamp("Stepped down primary")
+        pass
 
 
-def get_cluster_events(min_date):
-  EVENTS = [
-    # "CLUSTER_UPDATE_STARTED",
-    # "CLUSTER_UPDATE_SUBMITTED",
-    # "CLUSTER_UPDATE_COMPLETED",
-    "HOST_RESTARTED",
-    "HOST_ROLLBACK",
-    "SUCCESSFUL_DEPLOY",
-    "PRIMARY_ELECTED",
-    "HOST_NOW_PRIMARY",
-    "HOST_NOW_SECONDARY"
-  ]
-  
-  eventsParam = 'eventType=' + '&eventType='.join(EVENTS)
-  query_params = f'?{eventsParam}'
-  
-  if min_date:
-    query_params += '&minDate=' + min_date
-  
-  resp = requests.get(f'{ATLAS_API_HOSTNAME_PATH}/events{query_params}', auth=HTTPDigestAuth(ATLAS_API_KEY_PUBLIC, ATLAS_API_KEY_PRIVATE))
-  return resp.json()
+def kill_node(container_name):
+    try:
+        container = docker_client.containers.get(container_name)
+        container.kill()
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
+
+
+def start_node(container_name):
+    try:
+        container = docker_client.containers.get(container_name)
+        container.start()
+        return True
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
+        return False
+
+
+def disconnect_node(container_name):
+    try:
+        network = docker_client.networks.get(CONTAINER_NETWORK_NAME)
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find network with name or ID '%s'" % CONTAINER_NETWORK_NAME)
+        return False
+    try:
+        network.disconnect(container_name)
+        return True
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
+        return False
+
+
+def reconnect_node(container_name):
+    try:
+        network = docker_client.networks.get(CONTAINER_NETWORK_NAME)
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find network with name or ID '%s'" % CONTAINER_NETWORK_NAME)
+        return False
+    try:
+        network.connect(container_name)
+        container = docker_client.containers.get(container_name)
+        container.restart()
+        return True
+    except docker.errors.NotFound:
+        print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
+        return False
 
 
 if __name__ == '__main__':
     client, db, collection = get_mongo_connection()
     create_indexes(collection['requestLog'])
     region = get_region()
+
+    docker_client = docker.from_env()
     
     app.run(debug=True, host='0.0.0.0', port=APP_PORT)

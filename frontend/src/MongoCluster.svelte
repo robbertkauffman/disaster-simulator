@@ -62,32 +62,20 @@
       const res = await fetch(appServerEndpoint + RS_STATUS_PATH)
       const rsStatus = await res.json();
       if (rsStatus && rsStatus.members) {
-        const primary = rsStatus.members.find(member => member.stateStr === 'PRIMARY');
-        if (primary && primary.name) {
-          const idx = nodes.findIndex(node => node.host === primary.name);
-          // find primary
-          if (idx !== -1 && nodes[idx].type !== 'Primary') {
-            const oldType = nodes[idx].type;
-            // reset all nodes except current primary to secondary
-            nodes.forEach((node, i) => {
-              if (i !== idx) {
-                node.type = 'Secondary'
-                node.isNewPrimary = false;
-                node.connectedToApp = false;
-              }
-            });
-            // set primary node
-            nodes[idx].type = 'Primary';
-            nodes[idx].connectedToApp = true;
-            // new primary was elected
-            if (oldType === 'Secondary') {
+        rsStatus.members.forEach((member) => {
+          const idx = nodes.findIndex(node => node.host === member.name);
+          if (idx !== -1) {
+            if (nodes[idx].type !== "PRIMARY" && member.stateStr === 'PRIMARY') {
               isTestingFailover.set(false);
               nodes[idx].isNewPrimary = true;
+              nodes[idx].connectedToApp = true;
+            } else {
+              nodes[idx].isNewPrimary = false;
+              nodes[idx].connectedToApp = false;
             }
+            nodes[idx].type = member.stateStr;
           }
-        } else {
-          console.log(`Error! Could not determine primary`);
-        }
+        });
       } else {
         console.log(`Error! Could not determine primary`);
       }
@@ -119,5 +107,6 @@
 </script>
 
 {#each nodes as node}
-  <MongoNode type={node.type} region={node.region} isNewPrimary={node.isNewPrimary} bind:iconElm={node.iconElm}/>
+  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} isNewPrimary={node.isNewPrimary}
+             appServerEndpoint={appServerEndpoint} bind:iconElm={node.iconElm}/>
 {/each}

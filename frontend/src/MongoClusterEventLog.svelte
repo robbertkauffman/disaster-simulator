@@ -5,8 +5,8 @@
 
   export let appServerEndpoint;
 
-  const CLUSTER_EVENTS_PATH = "/getClusterEvents";
-  const INTERVAL = 10; // in seconds
+  const CLUSTER_EVENTS_PATH = "/eventLog";
+  const INTERVAL = 1; // in seconds
 
   let events = [];
   let requestInterval;
@@ -15,30 +15,24 @@
   });
 
   onDestroy(() => {
-    // clearInterval(requestInterval);
+    clearInterval(requestInterval);
   });
 
   isRunning.subscribe(value => {
 		if (value) {
-      // requestInterval = setInterval(getAtlasClusterEvents, INTERVAL * 1000);
+      requestInterval = setInterval(getAtlasClusterEvents, INTERVAL * 1000);
     } else {
-      // clearInterval(requestInterval);
+      clearInterval(requestInterval);
     }
 	});
 
-  function getMinDate() {
-    const minDate = new Date();
-    minDate.setSeconds(minDate.getSeconds() - INTERVAL);
-    return minDate.toISOString();
-  }
-
   async function getAtlasClusterEvents() {  
     try {
-      const url = appServerEndpoint + CLUSTER_EVENTS_PATH + '?minDate=' + getMinDate();
-      const resp = await fetch(url, { method: 'GET' });
+      const resp = await fetch(appServerEndpoint + CLUSTER_EVENTS_PATH, { method: 'GET' });
       const data = await resp.json();
-      if (resp.ok && data && data.results) {
-        events = events.concat(data.results);
+      if (resp.ok && data) {
+        // prepend events
+        events = data.reverse().concat(events);
       }
     } catch (e) {
       console.log(`Get Atlas Cluster events failed: ${e}`)
@@ -50,10 +44,10 @@
   <div id="cluster-events" class="text-end">
     <p class="h5">Cluster event log</p>
     <table class="text-start float-end">
-      {#each events.reverse() as event}
+      {#each events.slice(0, 10) as event}
         <tr>
-          <td><span class="text-muted">{getTimestamp(event.created)}:</span></td>
-          <td class="text-end">{event.eventTypeName}</td>
+          <td class="text-end">{event.message}</td>
+          <td><span class="text-muted">{getTimestamp(event.ts)}</span></td>
         </tr>
       {/each}
     </table>
@@ -63,5 +57,9 @@
 <style>
   #cluster-events {
     font-size: .75em
+  }
+
+  .text-muted {
+    margin-left: 10px;
   }
 </style>

@@ -7,7 +7,6 @@
 	import Controls from './Controls.svelte';
 	import MongoCluster from './MongoCluster.svelte';
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
-	import StartStopButton from './StartStopButton.svelte';
 	import Stats from './Stats.svelte';
 	
 	const API_PATHS = {

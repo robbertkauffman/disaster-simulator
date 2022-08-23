@@ -28,6 +28,8 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 is_running = False
 request_log = []
+event_log = []
+current_primary = (None, None)
 
 @app.route('/')
 def home():
@@ -85,6 +87,10 @@ def stop():
 @app.route('/requestlog')
 def get_request_log():
     return get_request_log()
+
+@app.route('/eventLog')
+def get_event_log():
+    return get_events()
 
 @app.route('/getStats', methods = ['GET'])
 def get_stats():
@@ -185,6 +191,7 @@ def start(retry_reads, retry_writes, read_preference):
     while is_running:
         do_operation('findOne', find, collection['query'], client)
         do_operation('insertOne', insert, collection['query'], client)
+        check_primary()
     store_request_log()
 
 
@@ -277,6 +284,40 @@ def get_request_log():
     return json_util.dumps(request_log[-10:])
 
 
+def check_primary():
+    global client, current_primary
+    if client.primary and len(client.primary) > 0 and (
+            current_primary[0] != client.primary[0] or current_primary[1] != client.primary[1]):
+        if current_primary[0]:
+            rs_status = client.admin.command('replSetGetStatus')
+            if rs_status and rs_status['electionCandidateMetrics']:
+                add_event("New primary was elected", datetime_from_utc_to_local(rs_status['electionCandidateMetrics']['newTermStartDate']))
+        current_primary = client.primary
+
+
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
+    return utc_datetime + offset
+
+
+def add_event(message, ts=None):
+    if ts is None:
+        ts = datetime.now()
+    global event_log
+    event_log.append({
+        "message": message,
+        "ts": ts.isoformat()
+    })
+
+
+def get_events():
+    global event_log
+    json_event_log = json_util.dumps(event_log)
+    event_log = []
+    return json_event_log
+
+
 def get_stats(min_date):
     stats = list(collection['requestLog'].aggregate([
         { "$match": { "ts": { "$gt": datetime.fromtimestamp(min_date / 1000, timezone(timedelta(hours=-4))) } } },
@@ -314,24 +355,36 @@ def get_region():
 
 def step_down_primary():
     try:
-        client.admin.command('replSetStepDown', 100)
+        global client
+        primary = client.primary[0] if client.primary and len(client.primary) > 0 else ""
+        add_event("Stepping down primary %s..." % client.primary[0])
+        res = client.admin.command('replSetStepDown', 100)
+        ts = res['$clusterTime']['clusterTime'].as_datetime()
+        print_with_timestamp("Stepped down primary %s at %s" % (client.primary, ts.isoformat()))
+        add_event("Primary stepped down", ts)
     except pymongo.errors.AutoReconnect:
-        print_with_timestamp("Stepped down primary")
         pass
+    except KeyError:
+        print_with_timestamp("Could not determine when cluster was stepped down")
 
 
 def kill_node(container_name):
     try:
+        add_event("Killing node %s..." % container_name)
         container = docker_client.containers.get(container_name)
         container.kill()
+        add_event("Node %s killed" % container_name)
+        return True
     except docker.errors.NotFound:
         print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
 
 
 def start_node(container_name):
     try:
+        add_event("Starting node %s..." % container_name)
         container = docker_client.containers.get(container_name)
         container.start()
+        add_event("Node %s started" % container_name)
         return True
     except docker.errors.NotFound:
         print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
@@ -340,12 +393,14 @@ def start_node(container_name):
 
 def disconnect_node(container_name):
     try:
+        add_event("Disconnecting node %s..." % container_name)
         network = docker_client.networks.get(CONTAINER_NETWORK_NAME)
     except docker.errors.NotFound:
         print_with_timestamp("Could not find network with name or ID '%s'" % CONTAINER_NETWORK_NAME)
         return False
     try:
         network.disconnect(container_name)
+        add_event("Node %s disconnected" % container_name)
         return True
     except docker.errors.NotFound:
         print_with_timestamp("Could not find container with name or ID '%s'" % container_name)
@@ -354,6 +409,7 @@ def disconnect_node(container_name):
 
 def reconnect_node(container_name):
     try:
+        add_event("Reconnecting node %s..." % container_name)
         network = docker_client.networks.get(CONTAINER_NETWORK_NAME)
     except docker.errors.NotFound:
         print_with_timestamp("Could not find network with name or ID '%s'" % CONTAINER_NETWORK_NAME)
@@ -362,6 +418,7 @@ def reconnect_node(container_name):
         network.connect(container_name)
         container = docker_client.containers.get(container_name)
         container.restart()
+        add_event("Node %s reconnected" % container_name)
         return True
     except docker.errors.NotFound:
         print_with_timestamp("Could not find container with name or ID '%s'" % container_name)

@@ -1,0 +1,55 @@
+services:
+  mongo1:
+    hostname: mongo1
+    image: mongo
+    container_name: mongo1
+    ports:
+      - 27017:27017
+    networks:
+      - mongoCluster
+    restart: always
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo1
+  mongo2:
+    hostname: mongo2
+    image: mongo
+    container_name: mongo2
+    ports:
+      - 27018:27018
+    networks:
+      - mongoCluster
+    restart: always
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo2 --port 27018
+  mongo3:
+    hostname: mongo3
+    image: mongo
+    container_name: mongo3
+    ports:
+      - 27019:27019
+    networks:
+      - mongoCluster
+    restart: always
+    command: mongod --replSet myReplicaSet --bind_ip localhost,mongo3 --port 27019
+
+  mongoinit:
+    image: mongo
+    networks:
+      - mongoCluster
+    restart: "no"
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    command: >
+      mongosh --host mongo1:27017 --eval 
+      '
+      rs.initiate({
+        _id: "myReplicaSet",
+        members: [
+          {_id: 0, host: "mongo1:27017"},
+          {_id: 1, host: "mongo2:27018"},
+          {_id: 2, host: "mongo3:27019"}
+        ]
+      })'
+
+networks:
+  mongoCluster: {}

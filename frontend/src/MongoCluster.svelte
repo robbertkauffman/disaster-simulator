@@ -1,6 +1,6 @@
 <script>
 	import { afterUpdate, onDestroy, onMount } from 'svelte';
-  import { isRunning, isTestingFailover } from './store.js';
+  import { isRunning } from './store.js';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
@@ -65,19 +65,26 @@
         rsStatus.members.forEach((member) => {
           const idx = nodes.findIndex(node => node.host === member.name);
           if (idx !== -1) {
-            if (nodes[idx].type !== "PRIMARY" && member.stateStr === 'PRIMARY') {
-              isTestingFailover.set(false);
-              nodes[idx].isNewPrimary = true;
+            // reset new primary flag so that notification doesn't keep reappearing
+            nodes[idx].isNewPrimary = false;
+            nodes[idx].connectedToApp = false;
+            // node is primary
+            if (member.stateStr === "PRIMARY") {
               nodes[idx].connectedToApp = true;
-            } else {
-              nodes[idx].isNewPrimary = false;
-              nodes[idx].connectedToApp = false;
+            }
+            // node state changed and became primary
+            if (nodes[idx].type !== undefined && nodes[idx].type !== "PRIMARY" && member.stateStr === 'PRIMARY') {
+              nodes[idx].isNewPrimary = true;
+            }
+            // node state changed
+            if (nodes[idx].type !== member.stateStr) {
+              nodes[idx].isChangingState = false;
             }
             nodes[idx].type = member.stateStr;
           }
         });
       } else {
-        console.log(`Error! Could not determine primary`);
+        console.log(`Error! Could not update node types`);
       }
       drawClusterTopologyLines();
     } catch(e) {
@@ -106,7 +113,7 @@
   }
 </script>
 
-{#each nodes as node}
-  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} isNewPrimary={node.isNewPrimary}
-             appServerEndpoint={appServerEndpoint} bind:iconElm={node.iconElm}/>
+{#each nodes as node (node.host)}
+  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} isChangingState={node.isChangingState} 
+             isNewPrimary={node.isNewPrimary} appServerEndpoint={appServerEndpoint} bind:iconElm={node.iconElm}/>
 {/each}

@@ -4,7 +4,7 @@
 
   export let startDate = new Date();
 
-  onMount(async () => {
+  onMount(() => {
 		createDashboard();
 	});
 

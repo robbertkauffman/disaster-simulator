@@ -1,54 +1,45 @@
 <script>
-  import { onDestroy, onMount } from 'svelte';
-  import { isRunning } from './store.js';
+  import { onMount } from 'svelte';
 
-  export let appServerEndpoint;
-  export let startDate;
-
-  const INTERVAL = 1000;
-  const GET_STATS_PATH = '/getStats';
-
+  export let socket;
   let stats = {};
-  let requestInterval;
 
   onMount(() => {
-	});
-
-  onDestroy(() => {
-    clearInterval(requestInterval);
+    listenForUpdateStats();
   });
-  
-  isRunning.subscribe(value => {
-		if (value) {
-      requestInterval = setInterval(getStats, INTERVAL);
-    } else {
-      clearInterval(requestInterval);
-    }
-	});
 
-  async function getStats() {
-    try {
-      const resp = await fetch(appServerEndpoint + GET_STATS_PATH + '?minDate=' + startDate.getTime());
-      stats = await resp.json();
-    } catch(e) {
-      console.log(`Error while fetching stats: ${e}`);
-    };
+  function listenForUpdateStats() {
+    if (socket) {
+      socket.on('updateStats', function(data) {
+        if (data && data.length > 0) {
+          stats = data[0];
+        }
+      });
+    }
   }
 </script>
 
 {#if stats}
-  {#if stats.avg}
   <div class="col col-lg-2">
     <p>Average latency:</p>
-    <p class="h5">{parseFloat(stats.avg).toFixed(2)} ms</p>
+    <p class="h5">
+      {#if stats.avg}
+        {parseFloat(stats.avg).toFixed(2)} ms
+      {:else}
+        -
+      {/if}
+    </p>
   </div>
-  {/if}
-  {#if stats.max}
   <div class="col col-lg-2">
     <p>Max latency:</p>
-    <p class="h5">{stats.max} ms</p>
+    <p class="h5">
+      {#if stats.max}
+        {stats.max} ms
+      {:else}
+        -
+      {/if}
+    </p>
   </div>
-  {/if}
 {/if}
 
 <style>

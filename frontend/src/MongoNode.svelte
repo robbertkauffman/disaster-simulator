@@ -11,30 +11,30 @@
   export let iconElm = undefined;
   export let appServerEndpoint;
   let state;
+  let lastAction;
 
   function getImagePath(type) {
     switch (type) {
-      case 'PRIMARY':
+      case 'Primary':
         return 'primary-active.png';
-      case 'SECONDARY':
+      case 'Secondary':
         return 'secondary-active.png';
     }
     return 'unknown.png';
   }
 
-  $: if (!isChangingState) {
-    if (goalState) {
-      state = goalState;
-      // need to reset state with a small delay, otherwise it doesn't render the goal state
-      // setTimeout only has global context, so need to reset the values via a seperate function
-      setTimeout(() => resetState(), 100);
-    }
+  $: if (!isChangingState && goalState) {
+    state = goalState;
+    // need to reset state with a small delay, otherwise it doesn't render the goal state
+    // setTimeout only has global context, so need to reset the values via a seperate function
+    setTimeout(resetState, 100);
   }
 
   $: if (isNewPrimary) {
+    isNewPrimary = false;
     goalState = "Node elected as new primary!";
     state = goalState;
-    setTimeout(() => resetState(), 100);
+    setTimeout(resetState, 100);
   }
 
   function resetState() {
@@ -50,13 +50,12 @@
         body: JSON.stringify({ containerName: name })
       });
       if (resp.ok) {
-        const body = await resp.json();
-        if (body && body.success) {
-          isChangingState = true;
-          state = changingState;
-          goalState = _goalState;
-          return true;
-        }
+        // const body = await resp.json();
+        isChangingState = true;
+        state = changingState;
+        goalState = _goalState;
+        lastAction = apiPath;
+        return true;
       }
     } catch (e) {
       console.log(`${apiPath} failed: ${e}`)
@@ -94,18 +93,18 @@
   <div class="context-menu" class:blink={isChangingState}>
     <i class="bi bi-caret-down-square menu-button"></i>
     <ul class="menu">
-        {#if type && type === "PRIMARY"}
-          <li><a href="#" on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</a></li>  
+        {#if type && type === "Primary"}
+          <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
         {/if}
-        {#if type && type !== "(not reachable/healthy)"}
-          <li><a href="#" on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</a></li>
-        {:else}
-          <li><a href="#" on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</a></li>
+        {#if type && type !== "Unknown"}
+          <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
+        {:else if lastAction !== 'disconnectNode'}
+          <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
         {/if}
-        {#if type && type !== "(not reachable/healthy)"}
-          <li><a href="#" on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</a></li>
-        {:else}
-          <li><a href="#" on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</a></li>
+        {#if type && type !== "Unknown"}
+          <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
+        {:else if lastAction !== 'killNode'}
+          <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
         {/if}
     </ul>
   </div>
@@ -155,22 +154,23 @@
   }
 
   .context-menu {
-    position: absolute;
-    top: 34px;
-    left: 101px;
-    text-align: left;
+    position: relative;
+    top: -65px;
+    text-align: center;
     z-index: 999;
   }
 
   .menu {
     display: none;
+    position: absolute;
+    right: 0;
+    margin-top: -3px;
     list-style: none;
     background-color: #fff;
     border: 1px solid #ced4da;
     border-radius: 0 10px 10px 10px;
     box-shadow: 0 10px 20px rgb(50 50 50 / 25%);
     padding: 10px 0;
-    margin-top: -3px;
   }
 
   .context-menu:hover .menu {
@@ -185,7 +185,11 @@
     color: darkgreen;
   }
 
-  .menu > li > a {
+  .menu > li {
+    min-width: 150px;
+  }
+
+  .menu > li > button {
     padding: 10px 30px 10px 15px;
     width: 100%;
     display: flex;
@@ -193,14 +197,16 @@
     color: #000;
     font-weight: 500;
     transition: 0.5s linear;
+    border: none;
+    background-color: transparent;
   }
 
-  .menu > li > a:hover {
-    background: #ced4da;
+  .menu > li > button:hover {
+    background-color: #ced4da;
     color: darkgreen;
   }
 
-  .menu > li > a > i {
+  .menu > li > button > i {
     padding-right: 10px;
   }
 </style>

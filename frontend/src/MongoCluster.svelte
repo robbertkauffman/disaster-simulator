@@ -1,38 +1,18 @@
 <script>
-	import { afterUpdate, onDestroy, onMount } from 'svelte';
-  import { isRunning } from './store.js';
+	import { onMount } from 'svelte';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
   export let nodes = [];
+  export let socket;
 
-  const INTERVAL = 1000;
   const RS_CONFIG_PATH = "/rsConfig";
-  const RS_STATUS_PATH = "/rsStatus";
-
-  let getNodeTypesInterval;
-  let hasTopologyLinesDrawn = false;
 
   onMount(async () => {
-		getClusterConfig();
+		await getClusterConfig();
+    listenForNodeChanges();
+    getNodeTypes();
 	});
-
-  onDestroy(() => {
-    clearInterval(getNodeTypesInterval);
-    unsubscribe;
-  });
-
-  const unsubscribe = isRunning.subscribe(value => {
-		if (value) {
-      // run rs.status() each second so that the node types get updated after a failover
-      getNodeTypesInterval = setInterval(getNodeTypes, INTERVAL);
-    } else {
-      clearInterval(getNodeTypesInterval);
-    }
-	});
-
-  afterUpdate(async () => {
-  });
 
 	async function getClusterConfig() {
     try {
@@ -44,70 +24,62 @@
           if (node.priority !== 0) {
             // Atlas clusters have auto-populated tags, but non-Atlas clusters usually don't
             if (node.tags && node.tags.region) {
-              nodes = [...nodes, { host: node.host, region: node.tags.region, connectedToApp: false }];
+              nodes = [...nodes, { host: node.host, type: 'Unknown', region: node.tags.region, connectedToApp: false }];
             } else {
-              nodes = [...nodes, { host: node.host, connectedToApp: false }];
+              nodes = [...nodes, { host: node.host, type: 'Unknown', connectedToApp: false }];
             }
           }
         }
       }
-      getNodeTypes();
     } catch(e) {
       console.log(`Fetching cluster config failed: ${e}`);
     }
-	};
+	}
 
-  async function getNodeTypes() {
-    try {
-      const res = await fetch(appServerEndpoint + RS_STATUS_PATH)
-      const rsStatus = await res.json();
-      if (rsStatus && rsStatus.members) {
-        rsStatus.members.forEach((member) => {
-          const idx = nodes.findIndex(node => node.host === member.name);
-          if (idx !== -1) {
+  function getNodeTypes() {
+    socket.emit('getNodeTypes');
+  }
+
+  function listenForNodeChanges() {
+    socket.on('updateNodeType', function(updatedNode) {
+      if (updatedNode && updatedNode.address && updatedNode.oldType && updatedNode.newType) {
+        const type = updatedNode.newType;
+        const idx = nodes.findIndex(node => node.host === updatedNode.address);
+        if (idx !== -1) {
+          if (type === 'Primary') {
+            nodes[idx].connectedToApp = true;
+            drawClusterTopologyLines();
+            // don't trigger primary elected notification at initialization
+            if (!updatedNode.init) {
+              nodes[idx].isNewPrimary = true;
+            }
+          } else if (nodes[idx].type === 'Primary') {
             // reset new primary flag so that notification doesn't keep reappearing
             nodes[idx].isNewPrimary = false;
             nodes[idx].connectedToApp = false;
-            // node is primary
-            if (member.stateStr === "PRIMARY") {
-              nodes[idx].connectedToApp = true;
-            }
-            // node state changed and became primary
-            if (nodes[idx].type !== undefined && nodes[idx].type !== "PRIMARY" && member.stateStr === 'PRIMARY') {
-              nodes[idx].isNewPrimary = true;
-            }
-            // node state changed
-            if (nodes[idx].type !== member.stateStr) {
-              nodes[idx].isChangingState = false;
-            }
-            nodes[idx].type = member.stateStr;
+            drawClusterTopologyLines();
           }
-        });
-      } else {
-        console.log(`Error! Could not update node types`);
+          nodes[idx].type = type;
+          nodes[idx].isChangingState = false;
+        } else {
+          console.log(`Couldn't find node ${updatedNode.address} in rs.config for update`);
+        }
       }
-      drawClusterTopologyLines();
-    } catch(e) {
-      console.log(`Fetching output of rs.status() command failed: ${e}`);
-    }
+    });
   }
 
   function drawClusterTopologyLines() {
-    // TODO: do not use boolean to check if lines need to be drawn
-    if (!hasTopologyLinesDrawn) {
-      for (let i = 1; i < nodes.length; i++) {
-        if (nodes[i - 1].iconElm && nodes[i].iconElm) {
-          new LeaderLine(
-            nodes[i - 1].iconElm,
-            nodes[i].iconElm,
-            {
-              color: 'grey',
-              startPlug: 'behind',
-              endPlug: 'behind'
-            }
-          );
-          hasTopologyLinesDrawn = true;
-        }
+    for (let i = 1; i < nodes.length; i++) {
+      if (nodes[i - 1].iconElm && nodes[i].iconElm) {
+        new LeaderLine(
+          nodes[i - 1].iconElm,
+          nodes[i].iconElm,
+          {
+            color: 'grey',
+            startPlug: 'behind',
+            endPlug: 'behind'
+          }
+        );
       }
     }
   }

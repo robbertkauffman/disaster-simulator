@@ -19,8 +19,8 @@ const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.lo
 // Change these:
 const CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet';
 const CONNECTION_STRING_STATS = '' || CONNECTION_STRING;
-const QUERY_DB = 'sample_restaurants';
-const QUERY_COLLECTION = 'restaurants';
+const QUERY_DB = 'sample_training';
+const QUERY_COLLECTION = 'grades';
 // Do not change these:
 const APP_PORT = 3000;
 const REQUESTLOG_DB = 'disasterSimulator';
@@ -184,46 +184,84 @@ async function start(retryReads, retryWrites, readPreference) {
   isRunning = true;
   requestLog = [];
   while (isRunning) {
-    await doOperation('findOne', find, collection, mongoClient);
-    await doOperation('insertOne', insert, collection, mongoClient);
+    await doOperation('findOne', findOne, collection, mongoClient);
+    await doOperation('insertOne', insertOne, collection, mongoClient);
     await storeRequestLog();
     await sleep(100);
   }
 }
 
 async function createIndexes(mongoClientStats) {
-  const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
-  await collection.createIndex({ ts: 1, latency: 1 });
-  await collection.createIndex({ ts: 1, success: 1 });
+  const queryCollection = mongoClientStats.db(QUERY_DB).collection(QUERY_COLLECTION);
+  queryCollection.createIndex({ student_id: 1 });
+  const statsCollection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+  await statsCollection.createIndex({ ts: 1, latency: 1 });
+  await statsCollection.createIndex({ ts: 1, success: 1 });
 }
 
-async function find(collection) {
-  await collection.aggregate([
-    { "$sample": { "size": 1 }},
-    { "$project": { "_id": 0 }}
-  ]);
+async function generateSampleData(mongoClient) {
+  const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
+  const stats = await collection.stats();
+  if (stats && stats.count === 0) {
+    const docs = [];
+    for (let i = 1; i < 10000; i++) {
+      docs.push(generateInsertDoc(i));
+    }
+    await collection.insertMany(docs);
+  }
 }
 
-async function insert(collection) {
-  await collection.insertOne(
-    {
-      "address": {
-      "building": "998814",
-      "coord": [-73.74438599999999, 40.72918],
-      "street": "Springfield Blvd",
-      "zipcode": "11427"
-    },
-    "borough": "Queens",
-    "cuisine": "Hamburgers",
-    "grade": "Not Yet Graded",
-    "score": 20
-  });
+async function findOne(collection, doc) {
+  await collection.findOne(doc);
+}
+
+
+async function insertOne(collection, doc) {
+  await collection.insertOne(doc);
+}
+
+function generateFindAndInsertDocs() {
+  return {
+    findOne: generateFindDoc(),
+    insertOne: generateInsertDoc()
+  };
+}
+
+function generateFindDoc() {
+  return { student_id: Math.floor(Math.random() * 9999) + 1 };
+}
+
+function generateInsertDoc(student_id) {
+  return {
+    student_id: student_id || Math.floor(Math.random() * 9999) + 1,
+    scores: [
+      {
+        type: "exam",
+        score: Math.random() * 100
+      },
+      {
+        type: "quiz",
+        score: Math.random() * 100
+      },
+      {
+        type: "homework",
+        score: Math.random() * 100
+      },
+      {
+        type: "home",
+        score: Math.random() * 100
+      }
+    ],
+    class_id: Math.floor(Math.random() * 500) + 1
+  };
 }
 
 async function doOperation(operationName, operationFn, collection, mongoClient) {
+  // generate docs ahead of time so it's not counted towards latency
+  const docs = generateFindAndInsertDocs();
   const startTime = new Date().getTime();
   try {
-    await operationFn(collection);
+    await operationFn(collection, docs[operationName]);
     const endTime = new Date().getTime();
     const latency = endTime - startTime;
     logRequest(startTime, operationName, latency, true, mongoClient);
@@ -343,7 +381,8 @@ httpServer.listen(APP_PORT, () => {
     onNodeChange(event);
   });
   mongoClientStats = new MongoClient(CONNECTION_STRING_STATS);
-  createIndexes(mongoClientStats);
+  generateSampleData(mongoClient);
+  createIndexes(mongoClient, mongoClientStats);
   
   dockerClient = new Docker({socketPath: dockerSocketPath});
   console.log(`listening on ${APP_PORT}`);

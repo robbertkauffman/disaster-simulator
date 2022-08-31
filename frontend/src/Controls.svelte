@@ -1,5 +1,5 @@
 <script>
-  import StartStopButton from "./StartStopButton.svelte";
+  import StartAndPauseButtons from "./StartAndPauseButtons.svelte";
 
 	export let retryReads = true;
   export let retryWrites = true;
@@ -9,7 +9,7 @@
 
 <div class="controls" role="group" aria-label="simulate failure menu">
   <div class="actions">
-    <StartStopButton appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
+    <StartAndPauseButtons appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" bind:checked={retryReads}>
@@ -66,8 +66,8 @@
   }
 
   .form-check-input:checked {
-    background-color: forestgreen;
-    border-color: forestgreen;
+    background-color: slategray;
+    border-color: slategray;
   }
 
   .form-floating {

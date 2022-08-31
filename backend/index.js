@@ -35,10 +35,11 @@ const nodeTypes = {};
 
 app.get('/start', (req, res) => {
   if (!isRunning) {
-    const retryReads = req.query.retryReads ? true : false;
-    const retryWrites = req.query.retryWrites ? true : false;
-    const readPreference = req.query.readPreference ? req.query.readPreference : 'primary';
-    start(retryReads, retryWrites, readPreference);
+    const resume = req.query.resume === 'true' ? true : false;
+    const retryReads = !req.query.hasOwnProperty('retryReads') || req.query.retryReads === 'true' ? true : false;
+    const retryWrites = !req.query.hasOwnProperty('retryWrites') || req.query.retryWrites === 'true' ? true : false;
+    const readPreference = req.query.hasOwnProperty('readPreference') ? req.query.readPreference : 'primary';
+    start(resume, retryReads, retryWrites, readPreference);
     res.send(`Started with retryReads=${retryReads}, retryWrites=${retryWrites} & readPreference=${readPreference}`);
   } else {
     res.send('Already running!');
@@ -173,12 +174,14 @@ function parseBody(param, req, res) {
   return req.body[param];
 }
 
-async function start(retryReads, retryWrites, readPreference) {
+async function start(resume, retryReads, retryWrites, readPreference) {
   mongoClient = new MongoClient(CONNECTION_STRING, retryReads, retryWrites, readPreference);
   const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
-  // set minDate which is used to query for latency stats on recent data only
-  minDate = new Date();
-  minDate = new Date(minDate.setSeconds(minDate.getSeconds() + 3));
+  if (!resume) {
+    // set minDate which is used to query for latency stats on recent data only
+    minDate = new Date();
+    minDate = new Date(minDate.setSeconds(minDate.getSeconds() + 3));
+  }
   printWithTimestamp(`Started querying with retryReads=${retryReads}, retryWrites=${retryWrites} & readPreference=${readPreference}`);
 
   isRunning = true;

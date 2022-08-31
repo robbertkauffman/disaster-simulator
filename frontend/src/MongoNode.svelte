@@ -89,25 +89,25 @@
     <img src="img/{getImagePath(type)}" class="figure-img" alt="{type} node" bind:this={iconElm} />
     <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
   </figure>
-  {#if $isRunning}
-  <div class="context-menu" class:blink={isChangingState}>
-    <i class="bi bi-caret-down-square menu-button"></i>
-    <ul class="menu">
-        {#if type && type === "Primary"}
-          <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
-        {/if}
-        {#if type && type !== "Unknown"}
-          <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
-        {:else if lastAction !== 'disconnectNode'}
-          <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
-        {/if}
-        {#if type && type !== "Unknown"}
-          <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
-        {:else if lastAction !== 'killNode'}
-          <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
-        {/if}
-    </ul>
-  </div>
+  {#if $isRunning && !isChangingState}
+    <div class="context-menu" class:blink={isChangingState}>
+      <i class="bi bi-caret-down-square menu-button"></i>
+      <ul class="menu">
+          {#if type && type === "Primary"}
+            <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
+          {/if}
+          {#if type && type !== "Unknown"}
+            <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
+          {:else if lastAction !== 'disconnectNode'}
+            <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
+          {/if}
+          {#if type && type !== "Unknown"}
+            <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
+          {:else if lastAction !== 'killNode'}
+            <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
+          {/if}
+      </ul>
+    </div>
   {/if}
   {#if $isRunning && state}
     {#if state !== goalState}

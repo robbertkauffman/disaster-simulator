@@ -9,7 +9,7 @@ app.use(express.json());
 const { Server } = require('socket.io');
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:8080"
+    origin: 'http://localhost:8080'
   }
 });
 const { MongoClient } = require('mongodb');
@@ -18,15 +18,16 @@ const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.lo
 
 // Change these:
 const CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet';
+const CONNECTION_STRING_STATS = '' || CONNECTION_STRING;
 const QUERY_DB = 'sample_restaurants';
 const QUERY_COLLECTION = 'restaurants';
 // Do not change these:
 const APP_PORT = 3000;
 const REQUESTLOG_DB = 'disasterSimulator';
-const REQUESTLOG_COLLECTION = 'requestLog';
+const REQUESTLOG_COLLECTION = 'requestLogs';
 const CONTAINER_NETWORK_NAME = 'containers_mongoCluster';
 
-let mongoClient, dockerClient;
+let mongoClient, mongoClientStats, dockerClient;
 let isRunning = false;
 let minDate;
 let requestLog = [];
@@ -185,13 +186,13 @@ async function start(retryReads, retryWrites, readPreference) {
   while (isRunning) {
     await doOperation('findOne', find, collection, mongoClient);
     await doOperation('insertOne', insert, collection, mongoClient);
-    await storeRequestLog(mongoClient);
+    await storeRequestLog();
     await sleep(100);
   }
 }
 
-async function createIndexes(mongoClient) {
-  const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
+async function createIndexes(mongoClientStats) {
+  const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
   await collection.createIndex({ ts: 1, latency: 1 });
   await collection.createIndex({ ts: 1, success: 1 });
 }
@@ -235,13 +236,13 @@ async function doOperation(operationName, operationFn, collection, mongoClient) 
 
 function logRequest(ts, operationName, latency, success, mongoClient, errMsg = undefined) {
   const newRequestLog = {
-    "ts": new Date(ts),
-    "operation": operationName,
-    "latency": latency,
-    "success": success,
-    "retryReads": mongoClient.retryReads,
-    "retryWrites": mongoClient.retryWrites,
-    "readPreference": mongoClient.readPreference.mode
+    ts: new Date(ts),
+    operation: operationName,
+    latency: latency,
+    success: success,
+    retryReads: mongoClient.retryReads,
+    retryWrites: mongoClient.retryWrites,
+    readPreference: mongoClient.readPreference.mode
   };
   if (errMsg) {
     newRequestLog['errMsg'] = errMsg;
@@ -251,10 +252,10 @@ function logRequest(ts, operationName, latency, success, mongoClient, errMsg = u
   requestLog.push(newRequestLog);
 }
 
-async function storeRequestLog(mongoClient) {
+async function storeRequestLog() {
   if (requestLog.length > 99) {
     try {
-      const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+      const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
       await collection.insertMany(requestLog);
       printWithTimestamp("Saved request logs");
       requestLog = [];
@@ -268,8 +269,8 @@ async function storeRequestLog(mongoClient) {
 function addEvent(msg, date = new Date()) {
   try {
     io.emit('logEvent', {
-      "message": msg,
-      "date": date
+      message: msg,
+      date: date
     });
   } catch (e) {
     printWithTimestamp(`Error while emitting event '${msg}': ${e}`);
@@ -278,10 +279,10 @@ function addEvent(msg, date = new Date()) {
 
 async function updateStats() {
   try {
-    const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+    const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
     const stats = await collection.aggregate([
-      { "$match": { "ts": { "$gt": minDate } } },
-      { "$group": { "_id": null, "avg": { "$avg": "$latency" }, "max": { "$max": "$latency" } } }
+      { $match: { ts: { $gt: minDate } } },
+      { $group: { _id: null, avg: { $avg: "$latency" }, max: { $max: "$latency" } } }
     ]).toArray();
     io.emit('updateStats', stats);
   } catch (e) {
@@ -341,7 +342,8 @@ httpServer.listen(APP_PORT, () => {
   mongoClient.on('serverDescriptionChanged', event => {
     onNodeChange(event);
   });
-  createIndexes(mongoClient);
+  mongoClientStats = new MongoClient(CONNECTION_STRING_STATS);
+  createIndexes(mongoClientStats);
   
   dockerClient = new Docker({socketPath: dockerSocketPath});
   console.log(`listening on ${APP_PORT}`);

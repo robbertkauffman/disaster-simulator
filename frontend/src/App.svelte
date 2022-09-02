@@ -22,7 +22,7 @@
 	});
 
 	function connectWs() {
-		socket = io("ws://localhost:3000");
+		socket = io(appServerEndpoint);
 		socket.io.on('error', (error) => {
 			console.log(`socket error: ${error}`);
 		});

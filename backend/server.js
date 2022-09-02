@@ -1,17 +1,12 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
 const app = express();
 const http = require('http');
 const httpServer = http.createServer(app);
-app.use(cors());
 app.use(express.json());
+app.use(express.static('frontend/public'));
 const { Server } = require('socket.io');
-const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:8080'
-  }
-});
+const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
 const Docker = require('dockerode');
 const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.local/share/containers/podman/machine/podman-machine-default/podman.sock';
@@ -19,10 +14,10 @@ const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.lo
 // Change these:
 const CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet';
 const CONNECTION_STRING_STATS = '' || CONNECTION_STRING;
+// Do not change these:
+const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
-// Do not change these:
-const APP_PORT = 3000;
 const REQUESTLOG_DB = 'disasterSimulator';
 const REQUESTLOG_COLLECTION = 'requestLogs';
 const CONTAINER_NETWORK_NAME = 'containers_mongoCluster';

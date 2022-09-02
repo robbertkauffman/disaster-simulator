@@ -29,12 +29,12 @@ function serve() {
 }
 
 export default {
-	input: 'src/main.js',
+	input: 'frontend/src/main.js',
 	output: {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: 'public/build/bundle.js'
+		file: 'frontend/public/build/bundle.js'
 	},
 	plugins: [
 		svelte({
@@ -64,7 +64,7 @@ export default {
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
-		!production && livereload('public'),
+		!production && livereload('frontend/public'),
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify

@@ -1,15 +1,18 @@
 <script>
   import StartAndPauseButtons from "./StartAndPauseButtons.svelte";
 
+  export let appServerEndpoint;
 	export let retryReads = true;
   export let retryWrites = true;
   export let readPreference = 'primary';
-  export let appServerEndpoint;
+  export let readConcern = 'local';
+  export let writeConcern = 'majority';
 </script>
 
 <div class="controls" role="group" aria-label="simulate failure menu">
   <div class="actions">
-    <StartAndPauseButtons appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} readPreference={readPreference}/>
+    <StartAndPauseButtons appServerEndpoint={appServerEndpoint} retryReads={retryReads} retryWrites={retryWrites} 
+                          readPreference={readPreference} readConcern={readConcern} writeConcern={writeConcern}/>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" value="" bind:checked={retryReads}>
@@ -34,8 +37,8 @@
       Read preference
     </label>
   </div>
-  <!-- <div class="form-floating">
-    <select class="form-select" id="read-concern" aria-label="Read concern">
+  <div class="form-floating">
+    <select class="form-select" id="read-concern" aria-label="Read concern" bind:value={readConcern}>
       <option value="local" selected>local</option>
       <option value="available">available</option>
       <option value="majority">majority</option>
@@ -46,14 +49,16 @@
     </label>
   </div>
   <div class="form-floating">
-    <select class="form-select" id="write-concern" aria-label="Write concern">
+    <select class="form-select" id="write-concern" aria-label="Write concern" bind:value={writeConcern}>
       <option value="majority" selected>majority</option>
+      <option value="0">0</option>
       <option value="1">1</option>
+      <option value="2">2</option>
     </select>
     <label for="write-concern">
       Write concern
     </label>
-  </div> -->
+  </div>
 </div>
 
 <style>

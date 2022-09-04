@@ -34,8 +34,11 @@ app.get('/start', (req, res) => {
     const retryReads = !req.query.hasOwnProperty('retryReads') || req.query.retryReads === 'true' ? true : false;
     const retryWrites = !req.query.hasOwnProperty('retryWrites') || req.query.retryWrites === 'true' ? true : false;
     const readPreference = req.query.hasOwnProperty('readPreference') ? req.query.readPreference : 'primary';
-    start(resume, retryReads, retryWrites, readPreference);
-    res.send(`Started with retryReads=${retryReads}, retryWrites=${retryWrites} & readPreference=${readPreference}`);
+    const readConcern = req.query.hasOwnProperty('readConcern') ? req.query.readConcern : 'local';
+    const writeConcern = req.query.hasOwnProperty('writeConcern') ? req.query.writeConcern : 'majority';
+    start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern);
+    res.send(`Started with retryReads=${retryReads}, retryWrites=${retryWrites}, readPreference=${readPreference}, ` +
+             `readConcern=${readConcern} & writeConcern=${writeConcern}`);
   } else {
     res.send('Already running!');
   }
@@ -169,15 +172,22 @@ function parseBody(param, req, res) {
   return req.body[param];
 }
 
-async function start(resume, retryReads, retryWrites, readPreference) {
-  mongoClient = new MongoClient(CONNECTION_STRING, retryReads, retryWrites, readPreference);
+async function start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern) {
+  mongoClient = new MongoClient(CONNECTION_STRING, {
+    retryReads: retryReads,
+    retryWrites: retryWrites,
+    readPreference: readPreference,
+    readConcernLevel: readConcern,
+    w: writeConcern
+  });
   const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
   if (!resume) {
     // set minDate which is used to query for latency stats on recent data only
     minDate = new Date();
     minDate = new Date(minDate.setSeconds(minDate.getSeconds() + 3));
   }
-  printWithTimestamp(`Started querying with retryReads=${retryReads}, retryWrites=${retryWrites} & readPreference=${readPreference}`);
+  printWithTimestamp(`Started querying with retryReads=${retryReads}, retryWrites=${retryWrites}, readPreference=${readPreference}` +
+                     `readConcern=${readConcern} & writeConcern=${writeConcern}`);
 
   isRunning = true;
   requestLog = [];

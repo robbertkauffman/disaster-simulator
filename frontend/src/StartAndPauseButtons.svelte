@@ -5,6 +5,8 @@
   export let retryReads;
   export let retryWrites;
   export let readPreference;
+  export let readConcern;
+  export let writeConcern;
 
   const START_PATH = '/start';
   const STOP_PATH = '/stop';
@@ -35,7 +37,8 @@
 
   async function start(resume = false) {
     try {
-      let url = `${appServerEndpoint}${START_PATH}?retryReads=${retryReads}&retryWrites=${retryWrites}&readPreference=${readPreference}`;
+      let url = `${appServerEndpoint}${START_PATH}?retryReads=${retryReads}&retryWrites=${retryWrites}&` +
+                `readPreference=${readPreference}&readConcern=${readConcern}&writeConcern=${writeConcern}`;
       if (resume) {
         url += '&resume=true';
       }

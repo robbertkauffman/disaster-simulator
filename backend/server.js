@@ -369,8 +369,8 @@ function modifyTypeName(type) {
   }
 }
 
-// front-end retrieves latest node types/status during initialization
 io.on('connection', (socket) => {
+  // front-end retrieves latest node types/status during initialization
   socket.on('getNodeTypes', () => {
     for (node in nodeTypes) {
       io.emit('updateNodeType', {
@@ -379,6 +379,13 @@ io.on('connection', (socket) => {
         newType: nodeTypes[node].newType,
         init: true
       });
+    }
+  });
+  // stop querying when WS connection is closed
+  socket.on('disconnect', () => {
+    if (isRunning) {
+      isRunning = false;
+      printWithTimestamp("Stopped querying...");
     }
   });
 });

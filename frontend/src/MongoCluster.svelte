@@ -3,30 +3,51 @@
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
+  export let clusterType = 'local';
   export let nodes = [];
   export let socket;
 
-  const RS_CONFIG_PATH = "/rsConfig";
-
   onMount(async () => {
+    await getClusterType();
 		await getClusterConfig();
     listenForNodeChanges();
     getNodeTypes();
 	});
 
+  async function getClusterType() {
+    try {
+      const resp = await fetch(appServerEndpoint + '/getClusterType');
+      const respText = await resp.text();
+      if (resp.ok && respText) {
+        clusterType = respText;
+        console.log(`Cluster type is ${clusterType}`);
+      }
+    } catch (e) {
+      console.log(`Failed getting cluster type: ${e}`);
+    }
+  }
+
 	async function getClusterConfig() {
     try {
-      const res = await fetch(appServerEndpoint + RS_CONFIG_PATH);
+      const res = await fetch(appServerEndpoint + '/rsConfig');
       const rsConfig = await res.json();
       if (rsConfig && rsConfig.members && rsConfig.members.length > 0) {
         for (const node of rsConfig.members) {
           // only display electable nodes
           if (node.priority !== 0) {
+            // Atlas clusters internal hosts are different than addresses used in topology events, 
+            // so use public host which is the same
+            let host;
+            if (clusterType === 'atlas' && node.horizons && node.horizons.PUBLIC) {
+              host = node.horizons.PUBLIC;
+            } else {
+              host = node.host;
+            }
             // Atlas clusters have auto-populated tags, but non-Atlas clusters usually don't
             if (node.tags && node.tags.region) {
-              nodes = [...nodes, { host: node.host, type: 'Unknown', region: node.tags.region, connectedToApp: false }];
+              nodes = [...nodes, { host: host, type: 'Unknown', region: node.tags.region, connectedToApp: false }];
             } else {
-              nodes = [...nodes, { host: node.host, type: 'Unknown', connectedToApp: false }];
+              nodes = [...nodes, { host: host, type: 'Unknown', connectedToApp: false }];
             }
           }
         }
@@ -86,6 +107,8 @@
 </script>
 
 {#each nodes as node (node.host)}
-  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} isChangingState={node.isChangingState} 
-             isNewPrimary={node.isNewPrimary} appServerEndpoint={appServerEndpoint} bind:iconElm={node.iconElm}/>
+  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} 
+             isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary} 
+             appServerEndpoint={appServerEndpoint} clusterType={clusterType} 
+             bind:iconElm={node.iconElm}/>
 {/each}

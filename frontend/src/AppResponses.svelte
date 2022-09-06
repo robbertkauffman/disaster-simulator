@@ -19,6 +19,11 @@
   }
 
   function addRequest(request) {
+    if (request.ts) {
+      request.ts = new Date(request.ts);
+    } else {
+      request.ts = new Date();
+    }
     if (requestLog.length > 9) {
       requestLog.pop();
     }

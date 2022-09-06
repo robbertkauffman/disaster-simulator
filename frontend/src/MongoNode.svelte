@@ -2,6 +2,7 @@
   import { fade } from 'svelte/transition';
   import { isRunning } from './store';
 
+  export let clusterType;
   export let type;
   export let name;
 	export let region;
@@ -82,6 +83,10 @@
   function disconnectNode() {
     doPostRequest('disconnectNode', 'Disconnecting node', 'Node has disconnected');
   }
+
+  function testFailover() {
+    doPostRequest('testFailover', 'Restarting node', 'Node has restarted');
+  }
 </script>
 
 <div class="col-3 text-center container">
@@ -90,24 +95,32 @@
     <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
   </figure>
   {#if $isRunning && !isChangingState}
-    <div class="context-menu" class:blink={isChangingState}>
-      <i class="bi bi-caret-down-square menu-button"></i>
-      <ul class="menu">
-          {#if type && type === "Primary"}
-            <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
+    {#if clusterType === 'local' || (clusterType === 'atlas' && type === 'Primary')}
+      <div class="context-menu" class:blink={isChangingState}>
+        <i class="bi bi-caret-down-square menu-button"></i>
+        <ul class="menu">
+          {#if clusterType === 'local'}
+            {#if type === 'Primary'}
+              <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
+            {/if}
+            {#if type !== 'Unknown'}
+              <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
+            {:else if lastAction !== 'disconnectNode'}
+              <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
+            {/if}
+            {#if type !== 'Unknown'}
+              <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
+            {:else if lastAction !== 'killNode'}
+              <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
+            {/if}
+          {:else if clusterType === 'atlas'}
+            {#if type === 'Primary'}
+              <li><button on:click="{testFailover}"><i class="bi bi-lightning-fill"></i> Test failover</button></li>  
+            {/if}
           {/if}
-          {#if type && type !== "Unknown"}
-            <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
-          {:else if lastAction !== 'disconnectNode'}
-            <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
-          {/if}
-          {#if type && type !== "Unknown"}
-            <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
-          {:else if lastAction !== 'killNode'}
-            <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
-          {/if}
-      </ul>
-    </div>
+        </ul>
+      </div>
+    {/if}
   {/if}
   {#if $isRunning && state}
     {#if state !== goalState}

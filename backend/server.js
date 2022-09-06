@@ -8,25 +8,43 @@ app.use(express.static('frontend/public'));
 const { Server } = require('socket.io');
 const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
-const Docker = require('dockerode');
-const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.local/share/containers/podman/machine/podman-machine-default/podman.sock';
+const { addEvent, printWithTimestamp } = require('./common');
 
 // Change these:
 const CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet';
 const CONNECTION_STRING_STATS = '' || CONNECTION_STRING;
+const ATLAS_CLUSTER_CONFIG = {
+  // groupId: '************************',
+  // clusterName: 'ClusterName',
+  // apiKeyPublic: '********',
+  // apiKeyPrivate: '********-****-****-****-************'
+}
 // Do not change these:
 const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
 const REQUESTLOG_DB = 'disasterSimulator';
 const REQUESTLOG_COLLECTION = 'requestLogs';
-const CONTAINER_NETWORK_NAME = 'containers_mongoCluster';
 
-let mongoClient, mongoClientStats, dockerClient;
+let mongoClient, mongoClientStats;
 let isRunning = false;
+let clusterType; // 'local' || 'atlas' - set if you don't want to auto-detect
 let minDate;
 let requestLog = [];
 const nodeTypes = {};
+
+mongoClient = new MongoClient(CONNECTION_STRING);
+// auto detect if configuration points to an Atlas cluster or local cluster
+if (!clusterType && ATLAS_CLUSTER_CONFIG && ATLAS_CLUSTER_CONFIG.groupId && 
+    ATLAS_CLUSTER_CONFIG.clusterName && ATLAS_CLUSTER_CONFIG.apiKeyPublic && 
+    ATLAS_CLUSTER_CONFIG.apiKeyPrivate && CONNECTION_STRING.indexOf('mongodb.net') !== -1) {
+  clusterType = 'atlas';
+  require('./atlasCluster')(app, io, ATLAS_CLUSTER_CONFIG);
+} else {
+  clusterType = 'local';
+  require('./localCluster')(app, io, mongoClient);
+}
+console.log(`Cluster type is ${clusterType}`);
 
 app.get('/start', (req, res) => {
   if (!isRunning) {
@@ -54,6 +72,8 @@ app.get('/stop', (req, res) => {
   }
 });
 
+app.get('/getClusterType', (req, res) => res.send(clusterType));
+
 app.get('/rsConfig', async (req, res) => {
   try {
     const rsConf = await mongoClient.db('local').collection('system.replset').findOne();
@@ -63,113 +83,8 @@ app.get('/rsConfig', async (req, res) => {
   }
 });
 
-app.post('/stepDown', async (req, res) => {
-  try {
-    addEvent(`Stepping down primary...`);
-    const mongoRes = await mongoClient.db('admin').command({ replSetStepDown: 100 });
-    if (mongoRes && mongoRes.ok === 1) {
-      const successMsg = `Primary stepped down`;
-      printWithTimestamp(successMsg);
-      addEvent(successMsg);
-      res.send(successMsg);
-    } else {
-      printWithTimestamp(`Error! Step down command returned : ${JSON.stringify(mongoRes)}`);
-      res.status(500).send(`Error! Step down command returned:`, mongoRes);  
-    }
-  } catch (e) {
-    printWithTimestamp(`Error while stepping down cluster: ${e}`);
-    res.status(500).send(`Error while stepping down cluster: ${e}`);
-  }
-});
-
-app.post('/killNode', (req, res) => {
-  const containerName = parseBody('containerName', req, res);
-  if (containerName) {
-    try {
-      addEvent(`Killing node ${containerName}...`);
-      const container = dockerClient.getContainer(containerName)
-      container.kill();
-      const successMsg = `Node ${containerName} killed`;
-      // addEvent(successMsg);
-      res.send(successMsg);
-    } catch (e) {
-      const errMsg = `Error while killing container with name or ID '${containerName}': ${e}`;
-      printWithTimestamp(errMsg);
-      res.status(400).send(errMsg);
-    }
-  }
-});
-
-app.post('/startNode', (req, res) => {
-  const containerName = parseBody('containerName', req, res);
-  if (containerName) {
-    try {
-      addEvent(`Starting node ${containerName}...`);
-      const container = dockerClient.getContainer(containerName)
-      container.start();
-      const successMsg = `Node ${containerName} started`;
-      // addEvent(successMsg);
-      res.send(successMsg);
-    } catch (e) {
-      const errMsg = `Error while starting container with name or ID '${containerName}': ${e}`;
-      printWithTimestamp(errMsg);
-      res.status(400).send(errMsg);
-    }
-  }
-});
-
-app.post('/disconnectNode', (req, res) => {
-  const containerName = parseBody('containerName', req, res);
-  if (containerName) {
-    try {
-      addEvent(`Disconnecting node ${containerName}...`);
-      const network = dockerClient.getNetwork(CONTAINER_NETWORK_NAME);
-      network.disconnect({ container: containerName });
-      const successMsg = `Node ${containerName} disconnected`;
-      // addEvent(successMsg);
-      res.send(successMsg);
-    } catch (e) {
-      const errMsg = `Error while disconnecting network with name ${CONTAINER_NETWORK_NAME} and container with name or ID '${containerName}': ${e}`;
-      printWithTimestamp(errMsg);
-      res.status(400).send(errMsg);
-    }
-  }
-});
-
-app.post('/reconnectNode', (req, res) => {
-  const containerName = parseBody('containerName', req, res);
-  if (containerName) {
-    try {
-      addEvent(`Reconnecting node ${containerName}...`);
-      const network = dockerClient.getNetwork(CONTAINER_NETWORK_NAME)
-      network.connect({ container: containerName });
-      const container = dockerClient.getContainer(containerName);
-      container.restart();
-      const successMsg = `Node ${containerName} reconnected`;
-      // addEvent(successMsg);
-      res.send(successMsg);
-    } catch (e) {
-      const errMsg = `Error while disconnecting network with name ${CONTAINER_NETWORK_NAME} and container with name or ID '${containerName}': ${e}`;
-      printWithTimestamp(errMsg);
-      res.status(400).send(errMsg);
-    }
-  }
-});
-
-function printWithTimestamp(msg) {
-  console.log(`${new Date().toISOString()}: ${msg}`);
-}
-
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function parseBody(param, req, res) {
-  if (!req.body || !req.body[param]) {
-    res.status(400).send(`${param} not specified in request body`);
-    return false;
-  }
-  return req.body[param];
 }
 
 async function start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern) {
@@ -312,17 +227,6 @@ async function storeRequestLog() {
   }
 }
 
-function addEvent(msg, date = new Date()) {
-  try {
-    io.emit('logEvent', {
-      message: msg,
-      date: date
-    });
-  } catch (e) {
-    printWithTimestamp(`Error while emitting event '${msg}': ${e}`);
-  }
-}
-
 async function updateStats() {
   try {
     const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
@@ -344,7 +248,7 @@ function onNodeChange(event) {
     if (oldType !== newType && newType !== 'RSOther') {
       // store types so they can be retrieved when front-end initializes
       nodeTypes[address] = { oldType: oldType, newType: newType };
-      addEvent(`Node '${address.split(':')[0]}' changed from ${oldType} to ${newType}`);
+      addEvent(`Node '${address.split(':')[0]}' changed from ${oldType} to ${newType}`, io);
       io.emit('updateNodeType', {
         address: address,
         newType: newType,
@@ -368,30 +272,30 @@ function modifyTypeName(type) {
       return type;
   }
 }
-
-io.on('connection', (socket) => {
-  // front-end retrieves latest node types/status during initialization
-  socket.on('getNodeTypes', () => {
-    for (node in nodeTypes) {
-      io.emit('updateNodeType', {
-        address: node,
-        oldType: nodeTypes[node].oldType,
-        newType: nodeTypes[node].newType,
-        init: true
-      });
-    }
+function initSocketsListeners() {
+  io.on('connection', (socket) => {
+    // front-end retrieves latest node types/status during initialization
+    socket.on('getNodeTypes', () => {
+      for (node in nodeTypes) {
+        io.emit('updateNodeType', {
+          address: node,
+          oldType: nodeTypes[node].oldType,
+          newType: nodeTypes[node].newType,
+          init: true
+        });
+      }
+    });
+    // stop querying when WS connection is closed
+    socket.on('disconnect', () => {
+      if (isRunning) {
+        isRunning = false;
+        printWithTimestamp("Stopped querying...");
+      }
+    });
   });
-  // stop querying when WS connection is closed
-  socket.on('disconnect', () => {
-    if (isRunning) {
-      isRunning = false;
-      printWithTimestamp("Stopped querying...");
-    }
-  });
-});
+}
 
 httpServer.listen(APP_PORT, () => {
-  mongoClient = new MongoClient(CONNECTION_STRING);
   mongoClient.on('serverDescriptionChanged', event => {
     onNodeChange(event);
   });
@@ -399,6 +303,6 @@ httpServer.listen(APP_PORT, () => {
   generateSampleData(mongoClient);
   createIndexes(mongoClient, mongoClientStats);
   
-  dockerClient = new Docker({socketPath: dockerSocketPath});
+  initSocketsListeners();
   console.log(`listening on ${APP_PORT}`);
 });

@@ -21,10 +21,21 @@
   }
 
   function addEvent(event) {
-    if (events.length > 9) {
-      events.pop();
+    if (event.date) {
+      event.date = new Date(event.date);
+    } else {
+      event.date = new Date();
     }
-    events = [event, ...events];
+    // sometimes mongo driver sends events multiple times
+    // only add event if not a duplicate 
+    // (same message and send within half a second of other event)
+    if (events.length === 0 || event.message !== events[0].message ||
+        events[0].date.getTime() + 500 < event.date.getTime()) {
+      if (events.length > 9) {
+        events.pop();
+      }
+      events = [event, ...events];
+    }
   }
 </script>
 

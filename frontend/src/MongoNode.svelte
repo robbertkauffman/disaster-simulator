@@ -90,7 +90,7 @@
 </script>
 
 <div class="col-3 text-center container">
-  <figure class="figure" class:blink={isChangingState}>
+  <figure class="figure" class:blink={isChangingState} data-tooltip={name}>
     <img src="img/{getImagePath(type)}" class="figure-img" alt="{type} node" bind:this={iconElm} />
     <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
   </figure>
@@ -160,6 +160,23 @@
     25%, 75% {
       opacity: 0.25;
     }
+  }
+
+  [data-tooltip]:before {
+    z-index: 9999;
+    position: absolute;
+    display: none;
+    content: attr(data-tooltip);
+    margin-top: -50px;
+    padding: 10px;
+    background-color: slategray;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 2px 2px 1px rgb(50 50 50 / 25%);
+  }
+
+  [data-tooltip]:hover:before {
+    display: block;
   }
 
   .container {

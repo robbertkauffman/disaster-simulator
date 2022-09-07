@@ -9,22 +9,14 @@ const { Server } = require('socket.io');
 const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
 const { addEvent, printWithTimestamp } = require('./common');
+const config = require('./config');
 
-// Change these:
-const CONNECTION_STRING = 'mongodb://mongo1:27017,mongo2:27018,mongo3:27019/myFirstDatabase?replicaSet=myReplicaSet';
-const CONNECTION_STRING_STATS = '' || CONNECTION_STRING;
-const ATLAS_CLUSTER_CONFIG = {
-  // groupId: '************************',
-  // clusterName: 'ClusterName',
-  // apiKeyPublic: '********',
-  // apiKeyPrivate: '********-****-****-****-************'
-}
-// Do not change these:
+// when changing the port, make sure to update the port in DSIM_APP_HOST in frontend/public/index.html
 const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
-const REQUESTLOG_DB = 'disasterSimulator';
-const REQUESTLOG_COLLECTION = 'requestLogs';
+const REQUESTLOG_DB = 'dsim';
+const REQUESTLOG_COLLECTION = 'logs';
 
 let mongoClient, mongoClientStats;
 let isRunning = false;
@@ -33,13 +25,14 @@ let minDate;
 let requestLog = [];
 const nodeTypes = {};
 
-mongoClient = new MongoClient(CONNECTION_STRING);
-// auto detect if configuration points to an Atlas cluster or local cluster
-if (!clusterType && ATLAS_CLUSTER_CONFIG && ATLAS_CLUSTER_CONFIG.groupId && 
-    ATLAS_CLUSTER_CONFIG.clusterName && ATLAS_CLUSTER_CONFIG.apiKeyPublic && 
-    ATLAS_CLUSTER_CONFIG.apiKeyPrivate && CONNECTION_STRING.indexOf('mongodb.net') !== -1) {
+// need to init mongo client here as it's being passed to atlasCluster and localCluster modules
+mongoClient = new MongoClient(config.connectionString);
+// auto detect if Atlas cluster or local cluster is configured
+if (!clusterType && config.atlasCluster && config.atlasCluster.groupId && 
+    config.atlasCluster.clusterName && config.atlasCluster.apiKeyPublic && 
+    config.atlasCluster.apiKeyPrivate && config.connectionString.indexOf('mongodb.net') !== -1) {
   clusterType = 'atlas';
-  require('./atlasCluster')(app, io, ATLAS_CLUSTER_CONFIG);
+  require('./atlasCluster')(app, io, config.atlasCluster);
 } else {
   clusterType = 'local';
   require('./localCluster')(app, io, mongoClient);
@@ -88,7 +81,7 @@ async function sleep(ms) {
 }
 
 async function start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern) {
-  mongoClient = new MongoClient(CONNECTION_STRING, {
+  mongoClient = new MongoClient(config.connectionString, {
     retryReads: retryReads,
     retryWrites: retryWrites,
     readPreference: readPreference,
@@ -272,7 +265,8 @@ function modifyTypeName(type) {
       return type;
   }
 }
-function initSocketsListeners() {
+
+function addWsListeners() {
   io.on('connection', (socket) => {
     // front-end retrieves latest node types/status during initialization
     socket.on('getNodeTypes', () => {
@@ -299,10 +293,10 @@ httpServer.listen(APP_PORT, () => {
   mongoClient.on('serverDescriptionChanged', event => {
     onNodeChange(event);
   });
-  mongoClientStats = new MongoClient(CONNECTION_STRING_STATS);
+  mongoClientStats = new MongoClient(config.connectionStringStats);
   generateSampleData(mongoClient);
   createIndexes(mongoClient, mongoClientStats);
   
-  initSocketsListeners();
+  addWsListeners();
   console.log(`listening on ${APP_PORT}`);
 });

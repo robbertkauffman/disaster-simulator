@@ -10,8 +10,8 @@
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
 	import Stats from './Stats.svelte';
 	
-	// global variable DR_APP_HOST is set in frontend/public/index.html
-	let appServerEndpoint = DR_APP_HOST;
+	// global variable DSIM_APP_HOST is set in frontend/public/index.html
+	const appServerEndpoint = DSIM_APP_HOST;
 	let mongoNodes = [];
 	let isRunningVal;
 	let startDate;

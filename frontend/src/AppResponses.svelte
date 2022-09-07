@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { getTimestamp } from './main.js'
+  import { getTimestamp } from './common.js'
 
   export let socket;
 

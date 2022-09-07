@@ -4,16 +4,21 @@
 
   export let startDate = new Date();
 
+  // global variables DSIM_CHART_IDS and DSIM_CHART_BASE_URL 
+  // are configured in frontend/public/index.html
+  const charts = DSIM_CHART_IDS;
+  const chartsBaseUrl = DSIM_CHARTS_BASE_URL;
+
   onMount(() => {
 		createDashboard();
 	});
 
   async function createDashboard() {
     const sdk = new ChartsEmbedSDK({
-      baseUrl: DR_CHART_BASE_URL
+      baseUrl: chartsBaseUrl
     });
 
-    for (const chartId of DR_CHART_IDS) {
+    for (const chartId of charts) {
       const chart = sdk.createChart({
         chartId: chartId.id,
         height: "300px",
@@ -28,6 +33,6 @@
   }
 </script>
 
-{#each DR_CHART_IDS as chart}
+{#each charts as chart}
   <div class="col" bind:this={chart.elm}/>
 {/each}

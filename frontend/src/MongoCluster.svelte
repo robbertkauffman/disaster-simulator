@@ -107,8 +107,8 @@
 </script>
 
 {#each nodes as node (node.host)}
-  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region} 
-             isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary} 
-             appServerEndpoint={appServerEndpoint} clusterType={clusterType} 
+  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
+             isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
+             appServerEndpoint={appServerEndpoint} clusterType={clusterType}
              bind:iconElm={node.iconElm}/>
 {/each}

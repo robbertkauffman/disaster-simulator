@@ -66,8 +66,8 @@
 			<div class="row justify-content-md-center">
 				<Stats socket={socket}/>
 			</div>
-			<div class="row chart-row">
-				<Charts startDate={startDate}/>
+			<div class="row justify-content-md-center">
+				<Charts socket={socket}/>
 			</div>
 			<div class="row justify-content-center">
 				<div class="col-5">

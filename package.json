@@ -19,7 +19,7 @@
     "svelte": "^3.0.0"
   },
   "dependencies": {
-    "@mongodb-js/charts-embed-dom": "^2.2.0",
+    "chart.js": "^3.9.1",
     "digest-fetch": "^1.3.0",
     "dockerode": "^3.3.4",
     "express": "^4.18.1",

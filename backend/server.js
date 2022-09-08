@@ -15,10 +15,11 @@ const config = require('./config');
 const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
+const QUERY_INTERVAL = 100;
 const REQUESTLOG_DB = 'dsim';
 const REQUESTLOG_COLLECTION = 'logs';
 
-let mongoClient, mongoClientStats;
+let mongoClient;
 let isRunning = false;
 let clusterType; // 'local' || 'atlas' - set if you don't want to auto-detect
 let minDate;
@@ -103,14 +104,14 @@ async function start(resume, retryReads, retryWrites, readPreference, readConcer
     await doOperation('findOne', findOne, collection, mongoClient);
     await doOperation('insertOne', insertOne, collection, mongoClient);
     await storeRequestLog();
-    await sleep(100);
+    await sleep(QUERY_INTERVAL);
   }
 }
 
-async function createIndexes(mongoClientStats) {
-  const queryCollection = mongoClientStats.db(QUERY_DB).collection(QUERY_COLLECTION);
+async function createIndexes(mongoClient) {
+  const queryCollection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
   queryCollection.createIndex({ student_id: 1 });
-  const statsCollection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+  const statsCollection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
   await statsCollection.createIndex({ ts: 1, latency: 1 });
   await statsCollection.createIndex({ ts: 1, success: 1 });
 }
@@ -209,7 +210,7 @@ function logRequest(ts, operationName, latency, success, mongoClient, errMsg = u
 async function storeRequestLog() {
   if (requestLog.length > 99) {
     try {
-      const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+      const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
       await collection.insertMany(requestLog);
       printWithTimestamp("Saved request logs");
       requestLog = [];
@@ -222,7 +223,7 @@ async function storeRequestLog() {
 
 async function updateStats() {
   try {
-    const collection = mongoClientStats.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+    const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
     const stats = await collection.aggregate([
       { $match: { ts: { $gt: minDate } } },
       { $group: { _id: null, avg: { $avg: "$latency" }, max: { $max: "$latency" } } }
@@ -293,9 +294,8 @@ httpServer.listen(APP_PORT, () => {
   mongoClient.on('serverDescriptionChanged', event => {
     onNodeChange(event);
   });
-  mongoClientStats = new MongoClient(config.connectionStringStats);
   generateSampleData(mongoClient);
-  createIndexes(mongoClient, mongoClientStats);
+  createIndexes(mongoClient);
   
   addWsListeners();
   console.log(`listening on ${APP_PORT}`);

@@ -2,12 +2,12 @@
 	import { onMount } from 'svelte';
 	import { isRunning } from './store.js';
 	import { io } from "socket.io-client";
-	import AppResponses from './AppResponses.svelte';
 	import AppServer from './AppServer.svelte';
 	import Charts from './Charts.svelte';
 	import Controls from './Controls.svelte';
 	import MongoCluster from './MongoCluster.svelte';
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
+	import SlowFailedQueryLog from './SlowFailedQueryLog.svelte';
 	import Stats from './Stats.svelte';
 	
 	// global variable DSIM_APP_HOST is set in frontend/public/index.html
@@ -69,9 +69,9 @@
 			<div class="row justify-content-md-center">
 				<Charts socket={socket}/>
 			</div>
-			<div class="row justify-content-center">
+			<div class="row logs-row justify-content-center">
 				<div class="col-5">
-					<AppResponses socket={socket}/>
+					<SlowFailedQueryLog socket={socket}/>
 				</div>
 				<div class="col-5">
 					<MongoClusterEventLog socket={socket}/>
@@ -94,5 +94,9 @@
 	.appserver-row {
 		min-height: 85px;
 		margin-bottom: 100px;
+	}
+
+	.logs-row {
+		margin-bottom: 25px;
 	}
 </style>

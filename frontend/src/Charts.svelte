@@ -1,17 +1,13 @@
 <script>
   import Chart from 'chart.js/auto';
+  import 'chartjs-adapter-luxon';
   import { onMount } from 'svelte';
 
   export let socket;
 
   // visualize max 2 minutes of data
   const MAX_DATAPOINTS = 120;
-  
   let chart;
-  let latencyLog = {
-    findOne: [],
-    insertOne: []
-  };
 
   // Chart.defaults.font.family = "var(--bs-font-sans-serif)";
   Chart.defaults.font.family = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"';
@@ -48,6 +44,12 @@
         }
       },
       scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'second',
+          }
+        },
         y: {
           beginAtZero: true,
           title: {
@@ -69,7 +71,7 @@
   });
 
   function listenForLogRequest() {
-    socket.on('logRequest', function(data) {
+    socket.on('logRequest', data => {
       if (data) {
         addRequest(data);
       }
@@ -83,28 +85,18 @@
       request.ts = new Date();
     }
 
-    const operationType = request.operation;
-    latencyLog[operationType].push(request.latency);
-
-    const idx = chart.data.datasets.findIndex(dataset => dataset.label === operationType);
+    const idx = chart.data.datasets.findIndex(dataset => dataset.label === request.operation);
     if (idx !== -1) {
       const dataset = chart.data.datasets[idx];
-      // only add data each second so we don't end up with 1000s of datapoints
-      if (dataset.data.length === 0 || dataset.data.at(-1).x !== request.ts.toLocaleTimeString()) {
-        dataset.data.push({
-          x: request.ts.toLocaleTimeString(),
-          y: Math.max(...latencyLog[operationType])
-        });
-        // only visualize recent data
-        if (dataset.data.length > MAX_DATAPOINTS) {
-          dataset.data.shift();
-        }
-        // update both datasets at same time
-        if (dataset.data.at(-1).x === dataset.data.at(-1).x) {
-          chart.update();
-        }
-        latencyLog[operationType] = [];
+      dataset.data.push({
+        x: request.ts,
+        y: Math.max(...request.latency)
+      });
+      // only visualize recent data
+      if (dataset.data.length > MAX_DATAPOINTS) {
+        dataset.data.shift();
       }
+      chart.update();
     } else {
       console.log(`Error while adding data to chart: no dataset defined for operation type: ${operationType}`);
     }

@@ -4,16 +4,14 @@
 
   export let socket;
 
-  const SLOW_QUERY_TRESHOLD = 100;
-
   let requestLog = [];
 
   onMount(() => {
-    listenForLogRequest();
+    listenForSlowFailedRequest();
   });
 
-  function listenForLogRequest() {
-    socket.on('logRequest', function(data) {
+  function listenForSlowFailedRequest() {
+    socket.on('logSlowFailedRequest', function(data) {
       if (data) {
         addRequest(data);
       }
@@ -21,24 +19,21 @@
   }
 
   function addRequest(request) {
-    if (!request.success || request.latency >= SLOW_QUERY_TRESHOLD) {
-      if (request.ts) {
-        request.ts = new Date(request.ts);
-      } else {
-        request.ts = new Date();
-      }
-      console.log(request);
-      if (requestLog.length > 9) {
-        requestLog.pop();
-      }
-      requestLog = [request, ...requestLog];
+    if (request.ts) {
+      request.ts = new Date(request.ts);
+    } else {
+      request.ts = new Date();
     }
+    if (requestLog.length > 9) {
+      requestLog.pop();
+    }
+    requestLog = [request, ...requestLog];
   }
 </script>
 
 <h2>Slow/failed query log</h2>
 {#if requestLog.length === 0}
-  ...
+  -
 {/if}
 {#each requestLog as request}
   <p class="log" class:text-danger={!request.success}>

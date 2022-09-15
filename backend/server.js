@@ -8,6 +8,7 @@ app.use(express.static('frontend/public'));
 const { Server } = require('socket.io');
 const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
+const childProc = require("child_process");
 const { addEvent, printWithTimestamp } = require('./common');
 const config = require('./config');
 
@@ -15,15 +16,18 @@ const config = require('./config');
 const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
-const QUERY_INTERVAL = 100;
 const REQUESTLOG_DB = 'dsim';
 const REQUESTLOG_COLLECTION = 'logs';
+const NR_THREADS = 1;
+const QUERY_TYPES = ['findOne', 'insertOne'];
+const SLOW_QUERY_TRESHOLD = 100;
 
 let mongoClient;
 let isRunning = false;
 let clusterType; // 'local' || 'atlas' - set if you don't want to auto-detect
 let minDate;
-let requestLog = [];
+let threads = [];
+let requestLog = {};
 const nodeTypes = {};
 
 // need to init mongo client here as it's being passed to atlasCluster and localCluster modules
@@ -43,14 +47,17 @@ console.log(`Cluster type is ${clusterType}`);
 app.get('/start', (req, res) => {
   if (!isRunning) {
     const resume = req.query.resume === 'true' ? true : false;
-    const retryReads = !req.query.hasOwnProperty('retryReads') || req.query.retryReads === 'true' ? true : false;
-    const retryWrites = !req.query.hasOwnProperty('retryWrites') || req.query.retryWrites === 'true' ? true : false;
-    const readPreference = req.query.hasOwnProperty('readPreference') ? req.query.readPreference : 'primary';
-    const readConcern = req.query.hasOwnProperty('readConcern') ? req.query.readConcern : 'local';
-    const writeConcern = req.query.hasOwnProperty('writeConcern') ? req.query.writeConcern : 'majority';
-    start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern);
-    res.send(`Started with retryReads=${retryReads}, retryWrites=${retryWrites}, readPreference=${readPreference}, ` +
-             `readConcern=${readConcern} & writeConcern=${writeConcern}`);
+    const options = {
+      retryReads: !req.query.hasOwnProperty('retryReads') || req.query.retryReads === 'true' ? true : false,
+      retryWrites: !req.query.hasOwnProperty('retryWrites') || req.query.retryWrites === 'true' ? true : false,
+      readPreference: req.query.hasOwnProperty('readPreference') ? req.query.readPreference : 'primary',
+      readConcernLevel: req.query.hasOwnProperty('readConcern') ? req.query.readConcern : 'local',
+      w: req.query.hasOwnProperty('writeConcern') ? req.query.writeConcern : 'majority'
+    };
+    start(resume, options);
+    res.send(`Started with retryReads=${options.retryReads}, retryWrites=${options.retryWrites}, ` +
+             `readPreference=${options.readPreference}, readConcern=${options.readConcernLevel} & ` +
+             `writeConcern=${options.w}`);
   } else {
     res.send('Already running!');
   }
@@ -58,8 +65,7 @@ app.get('/start', (req, res) => {
 
 app.get('/stop', (req, res) => {
   if (isRunning) {
-    isRunning = false;
-    printWithTimestamp("Stopped querying...");
+    stop();
     res.send("Stopped");
   } else {
     res.send("Already stopped");
@@ -77,35 +83,50 @@ app.get('/rsConfig', async (req, res) => {
   }
 });
 
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function start(resume, retryReads, retryWrites, readPreference, readConcern, writeConcern) {
-  mongoClient = new MongoClient(config.connectionString, {
-    retryReads: retryReads,
-    retryWrites: retryWrites,
-    readPreference: readPreference,
-    readConcernLevel: readConcern,
-    w: writeConcern
-  });
-  const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
+async function start(resume, options) {
   if (!resume) {
     // set minDate which is used to query for latency stats on recent data only
     minDate = new Date();
     minDate = new Date(minDate.setSeconds(minDate.getSeconds() + 3));
   }
-  printWithTimestamp(`Started querying with retryReads=${retryReads}, retryWrites=${retryWrites}, readPreference=${readPreference}` +
-                     `readConcern=${readConcern} & writeConcern=${writeConcern}`);
 
-  isRunning = true;
-  requestLog = [];
-  while (isRunning) {
-    await doOperation('findOne', findOne, collection, mongoClient);
-    await doOperation('insertOne', insertOne, collection, mongoClient);
-    await storeRequestLog();
-    await sleep(QUERY_INTERVAL);
+  threads = [];
+  threadCount = 0;
+  for (let i = 0; i < NR_THREADS; i++) {
+    // run inserts and finds in seperate threads, 
+    // otherwise only one query type will show as being slow/failing
+    for (const [j, queryType] of QUERY_TYPES.entries()) {
+      console.log(JSON.stringify(options));
+      const thread = childProc.fork('./backend/queryMongo.js', [JSON.stringify(options), queryType]);
+      threads[threadCount] = thread;
+      thread.on('error', (e) => {
+        printWithTimestamp(`Error while running child query process: ${e}`);
+      });
+      // listen for slow or failed requests
+      thread.on('message', async (msg) => {
+        if (msg && msg.request) {
+          await processRequest(msg.request);
+        }
+      });
+      threadCount++;
+    }
   }
+
+  printWithTimestamp(`Started querying with retryReads=${options.retryReads}, retryWrites=${options.retryWrites}, ` +
+                     `readPreference=${options.readPreference} readConcern=${options.readConcernLevel} & ` +
+                     `writeConcern=${options.w}`);
+  isRunning = true;
+}
+
+function stop() {
+  for (let thread of threads) {
+    if (thread && typeof thread.kill === 'function') {
+      thread.kill();
+    }
+  }
+
+  printWithTimestamp("Stopped querying...");
+  isRunning = false;
 }
 
 async function createIndexes(mongoClient) {
@@ -128,96 +149,49 @@ async function generateSampleData(mongoClient) {
   }
 }
 
-async function findOne(collection, doc) {
-  await collection.findOne(doc);
-}
-
-
-async function insertOne(collection, doc) {
-  await collection.insertOne(doc);
-}
-
-function generateFindAndInsertDocs() {
-  return {
-    findOne: generateFindDoc(),
-    insertOne: generateInsertDoc()
-  };
-}
-
-function generateFindDoc() {
-  return { student_id: Math.floor(Math.random() * 9999) + 1 };
-}
-
-function generateInsertDoc(student_id) {
-  return {
-    student_id: student_id || Math.floor(Math.random() * 9999) + 1,
-    scores: [
-      {
-        type: "exam",
-        score: Math.random() * 100
-      },
-      {
-        type: "quiz",
-        score: Math.random() * 100
-      },
-      {
-        type: "homework",
-        score: Math.random() * 100
-      },
-      {
-        type: "home",
-        score: Math.random() * 100
-      }
-    ],
-    class_id: Math.floor(Math.random() * 500) + 1
-  };
-}
-
-async function doOperation(operationName, operationFn, collection, mongoClient) {
-  // generate docs ahead of time so it's not counted towards latency
-  const docs = generateFindAndInsertDocs();
-  const startTime = new Date().getTime();
-  try {
-    await operationFn(collection, docs[operationName]);
-    const endTime = new Date().getTime();
-    const latency = endTime - startTime;
-    logRequest(startTime, operationName, latency, true, mongoClient);
-  } catch (e) {
-    const endTime = new Date().getTime();
-    printWithTimestamp(`Error while doing ${operationName} operation!: ${e}`);
-    logRequest(startTime, operationName, endTime - startTime, false, mongoClient, e.toString());
+async function processRequest(request) {
+  if (request.ts) {
+    // request object is received as JSON, so date is a string and needs to be converted
+    request.ts = new Date(request.ts);
   }
-}
 
-function logRequest(ts, operationName, latency, success, mongoClient, errMsg = undefined) {
-  const newRequestLog = {
-    ts: new Date(ts),
-    operation: operationName,
-    latency: latency,
-    success: success,
-    retryReads: mongoClient.retryReads,
-    retryWrites: mongoClient.retryWrites,
-    readPreference: mongoClient.readPreference.mode
-  };
-  if (errMsg) {
-    newRequestLog['errMsg'] = errMsg;
+  if (!request.success || request.latency >= SLOW_QUERY_TRESHOLD) {
+    io.emit('logSlowFailedRequest', request);
   }
   
-  io.emit('logRequest', newRequestLog);
-  requestLog.push(newRequestLog);
+  const operation = request.operation;
+
+  if (request.success) {
+    // initialize request log
+    if (!requestLog.hasOwnProperty(operation)) {
+      requestLog[operation] = { ...request };
+      requestLog[operation].latency = [];
+    }
+
+    // create logs and send updates every second
+    if (request.ts.toLocaleTimeString() !== requestLog[operation].ts.toLocaleTimeString()) {
+      // create copy of requestLog object so it can be reset for any concurrent requests coming in
+      const requestLogCopy = { ...requestLog[operation] };
+      requestLog[operation] = { ...request };
+      requestLog[operation].latency = [];
+      io.emit('logRequest', requestLogCopy);
+      await storeRequest(requestLogCopy)
+    }
+
+    requestLog[operation].latency.push(request.latency);
+  } else {
+    await storeRequest(request);
+  }
 }
 
-async function storeRequestLog() {
-  if (requestLog.length > 99) {
-    try {
-      const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
-      await collection.insertMany(requestLog);
-      printWithTimestamp("Saved request logs");
-      requestLog = [];
-      updateStats();
-    } catch (e) {
-      printWithTimestamp(`Error while inserting request logs!: ${e}`);
-    }
+async function storeRequest(request) {
+  const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
+  try {
+    await collection.insertOne(request);
+    printWithTimestamp("Logged request");
+    updateStats();
+  } catch (e) {
+    printWithTimestamp(`Error while logging request: ${e}`);
   }
 }
 
@@ -225,7 +199,8 @@ async function updateStats() {
   try {
     const collection = mongoClient.db(REQUESTLOG_DB).collection(REQUESTLOG_COLLECTION);
     const stats = await collection.aggregate([
-      { $match: { ts: { $gt: minDate } } },
+      { $match: { success: true, ts: { $gt: minDate } } },
+      { $unwind: { path: "$latency" } },
       { $group: { _id: null, avg: { $avg: "$latency" }, max: { $max: "$latency" } } }
     ]).toArray();
     io.emit('updateStats', stats);
@@ -283,8 +258,7 @@ function addWsListeners() {
     // stop querying when WS connection is closed
     socket.on('disconnect', () => {
       if (isRunning) {
-        isRunning = false;
-        printWithTimestamp("Stopped querying...");
+        stop();
       }
     });
   });
@@ -298,5 +272,6 @@ httpServer.listen(APP_PORT, () => {
   createIndexes(mongoClient);
   
   addWsListeners();
+
   console.log(`listening on ${APP_PORT}`);
 });

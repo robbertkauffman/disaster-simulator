@@ -42,7 +42,7 @@
 <div id="cluster-events" class="text-end">
   <h2>Cluster event log</h2>
   {#if events.length === 0}
-    ...
+    -
   {/if}
   <table class="text-start float-end">
     {#each events as event}

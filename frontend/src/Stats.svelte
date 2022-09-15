@@ -3,19 +3,29 @@
 
   export let socket;
   let stats = {};
+  let failed = 0;
 
   onMount(() => {
     listenForUpdateStats();
+    listenForSlowFailedRequest();
   });
 
   function listenForUpdateStats() {
     if (socket) {
       socket.on('updateStats', function(data) {
-        if (data && data.length > 0) {
+        if (data && data.length === 1) {
           stats = data[0];
         }
       });
     }
+  }
+
+  function listenForSlowFailedRequest() {
+    socket.on('logSlowFailedRequest', function(data) {
+      if (data && data.success === false) {
+        failed++;
+      }
+    });
   }
 </script>
 
@@ -35,6 +45,16 @@
     <p class="h5">
       {#if stats.max}
         {stats.max} ms
+      {:else}
+        -
+      {/if}
+    </p>
+  </div>
+  <div class="col col-lg-2">
+    <p>Failed operations:</p>
+    <p class="h5">
+      {#if failed}
+        {failed}
       {:else}
         -
       {/if}

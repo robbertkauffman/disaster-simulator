@@ -25,16 +25,39 @@ module.exports = function(app, io, mongoClient) {
     }
   });
 
-  app.post('/killNode', (req, res) => {
+  app.post('/restartNode', async (req, res) => {
     const containerName = parseBody('containerName', req, res);
     if (containerName) {
       try {
-        addEvent(`Killing node ${containerName}...`, io);
-        const container = dockerClient.getContainer(containerName)
-        container.kill();
-        const successMsg = `Node ${containerName} killed`;
+        addEvent(`Restarting node ${containerName}...`, io);
+        const container = dockerClient.getContainer(containerName);
+        await container.restart();
+        const successMsg = `Node ${containerName} restart`;
         // addEvent(successMsg, io);
         res.send(successMsg);
+      } catch (e) {
+        const errMsg = `Error while restarting container with name or ID '${containerName}': ${e}`;
+        printWithTimestamp(errMsg);
+        res.status(400).send(errMsg);
+      }
+    }
+  });
+
+  app.post('/stopNode', async (req, res) => {
+    const containerName = parseBody('containerName', req, res);
+    if (containerName) {
+      try {
+        addEvent(`Stopping node ${containerName}...`, io);
+        const container = dockerClient.getContainer(containerName);
+        const containerInfo = await container.inspect();
+        if (containerInfo.State.Running) {
+          await container.stop();
+          const successMsg = `Node ${containerName} stopped`;
+          // addEvent(successMsg, io);
+          res.send(successMsg);
+        } else {
+          res.send("Node is not running");
+        }
       } catch (e) {
         const errMsg = `Error while killing container with name or ID '${containerName}': ${e}`;
         printWithTimestamp(errMsg);
@@ -43,16 +66,44 @@ module.exports = function(app, io, mongoClient) {
     }
   });
 
-  app.post('/startNode', (req, res) => {
+  app.post('/killNode', async (req, res) => {
+    const containerName = parseBody('containerName', req, res);
+    if (containerName) {
+      try {
+        addEvent(`Killing node ${containerName}...`, io);
+        const container = dockerClient.getContainer(containerName);
+        const containerInfo = await container.inspect();
+        if (containerInfo.State.Running) {
+          await container.kill();
+          const successMsg = `Node ${containerName} killed`;
+          // addEvent(successMsg, io);
+          res.send(successMsg);
+        } else {
+          res.send("Node is not running");
+        }
+      } catch (e) {
+        const errMsg = `Error while killing container with name or ID '${containerName}': ${e}`;
+        printWithTimestamp(errMsg);
+        res.status(400).send(errMsg);
+      }
+    }
+  });
+
+  app.post('/startNode', async (req, res) => {
     const containerName = parseBody('containerName', req, res);
     if (containerName) {
       try {
         addEvent(`Starting node ${containerName}...`, io);
-        const container = dockerClient.getContainer(containerName)
-        container.start();
-        const successMsg = `Node ${containerName} started`;
-        // addEvent(successMsg, io);
-        res.send(successMsg);
+        const container = dockerClient.getContainer(containerName);
+        const containerInfo = await container.inspect();
+        if (!containerInfo.State.Running) {
+          await container.start();
+          const successMsg = `Node ${containerName} started`;
+          // addEvent(successMsg, io);
+          res.send(successMsg);
+        } else {
+          res.send("Node is already running");
+        }
       } catch (e) {
         const errMsg = `Error while starting container with name or ID '${containerName}': ${e}`;
         printWithTimestamp(errMsg);
@@ -61,16 +112,21 @@ module.exports = function(app, io, mongoClient) {
     }
   });
 
-  app.post('/disconnectNode', (req, res) => {
+  app.post('/disconnectNode', async (req, res) => {
     const containerName = parseBody('containerName', req, res);
     if (containerName) {
       try {
         addEvent(`Disconnecting node ${containerName}...`, io);
         const network = dockerClient.getNetwork(CONTAINER_NETWORK_NAME);
-        network.disconnect({ container: containerName });
-        const successMsg = `Node ${containerName} disconnected`;
-        // addEvent(successMsg, io);
-        res.send(successMsg);
+        const containerInfo = await container.inspect();
+        if (containerInfo.NetworkSettings.Networks.hasOwnProperty(CONTAINER_NETWORK_NAME)) {
+          await network.disconnect({ container: containerName });
+          const successMsg = `Node ${containerName} disconnected`;
+          // addEvent(successMsg, io);
+          res.send(successMsg);
+        } else {
+          res.send("Node is already disconnected");
+        }
       } catch (e) {
         const errMsg = `Error while disconnecting network with name ${CONTAINER_NETWORK_NAME} and container with name or ID '${containerName}': ${e}`;
         printWithTimestamp(errMsg);
@@ -79,18 +135,23 @@ module.exports = function(app, io, mongoClient) {
     }
   });
 
-  app.post('/reconnectNode', (req, res) => {
+  app.post('/reconnectNode', async (req, res) => {
     const containerName = parseBody('containerName', req, res);
     if (containerName) {
       try {
         addEvent(`Reconnecting node ${containerName}...`, io);
-        const network = dockerClient.getNetwork(CONTAINER_NETWORK_NAME)
-        network.connect({ container: containerName });
-        const container = dockerClient.getContainer(containerName);
-        container.restart();
-        const successMsg = `Node ${containerName} reconnected`;
-        // addEvent(successMsg, io);
-        res.send(successMsg);
+        const network = dockerClient.getNetwork(CONTAINER_NETWORK_NAME);
+        const containerInfo = await container.inspect();
+        if (!containerInfo.NetworkSettings.Networks.hasOwnProperty(CONTAINER_NETWORK_NAME)) {
+          await network.connect({ container: containerName });
+          const container = dockerClient.getContainer(containerName);
+          await container.restart();
+          const successMsg = `Node ${containerName} reconnected`;
+          // addEvent(successMsg, io);
+          res.send(successMsg);
+        } else {
+          res.send("Node is not connected to network");
+        }
       } catch (e) {
         const errMsg = `Error while disconnecting network with name ${CONTAINER_NETWORK_NAME} and container with name or ID '${containerName}': ${e}`;
         printWithTimestamp(errMsg);

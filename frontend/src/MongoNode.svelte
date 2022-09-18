@@ -68,6 +68,14 @@
     doPostRequest('stepDown', 'Node is stepping down', 'Node has stepped down');
   }
 
+  function restartNode() {
+    doPostRequest('restartNode', 'Restarting node', 'Node has restarted');
+  }
+
+  function stopNode() {
+    doPostRequest('stopNode', 'Stopping node', 'Node has stopped');
+  }
+
   function killNode() {
     doPostRequest('killNode', 'Killing node', 'Node has been killed');
   }
@@ -104,14 +112,17 @@
               <li><button on:click="{stepDown}"><i class="bi bi-chevron-bar-down"></i> Step down</button></li>  
             {/if}
             {#if type !== 'Unknown'}
+              <li><button on:click="{restartNode}"><i class="bi bi-arrow-clockwise"></i> Restart</button></li>
+              <li><button on:click="{stopNode}"><i class="bi bi-stop-fill"></i> Stop</button></li>
               <li><button on:click="{killNode}"><i class="bi bi-lightning-fill"></i> Kill</button></li>
-            {:else if lastAction !== 'disconnectNode'}
-              <li><button on:click="{startNode}"><i class="bi bi-arrow-clockwise"></i> Start</button></li>
-            {/if}
-            {#if type !== 'Unknown'}
               <li><button on:click="{disconnectNode}"><i class="bi bi-slash-circle"></i> Disconnect</button></li>
-            {:else if lastAction !== 'killNode'}
-              <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
+            {:else}
+              {#if lastAction === 'stopNode' || lastAction === 'killNode' || typeof lastAction === 'undefined'}
+                <li><button on:click="{startNode}"><i class="bi bi-power"></i> Start</button></li>
+              {/if}
+              {#if lastAction === 'disconnectNode' || typeof lastAction === 'undefined'}
+                <li><button on:click="{reconnectNode}"><i class="bi bi-check-circle"></i> Reconnect</button></li>
+              {/if}
             {/if}
           {:else if clusterType === 'atlas'}
             {#if type === 'Primary'}

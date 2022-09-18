@@ -1,5 +1,5 @@
 const { MongoClient } = require('mongodb');
-const { printWithTimestamp } = require('./common');
+const { generateInsertDoc, printWithTimestamp } = require('./common');
 const config = require('./config');
 
 const QUERY_INTERVAL = 0;
@@ -53,31 +53,6 @@ function generateFindAndInsertDocs() {
 
 function generateFindDoc() {
   return { student_id: Math.floor(Math.random() * 9999) + 1 };
-}
-
-function generateInsertDoc(student_id) {
-  return {
-    student_id: student_id || Math.floor(Math.random() * 9999) + 1,
-    scores: [
-      {
-        type: "exam",
-        score: Math.random() * 100
-      },
-      {
-        type: "quiz",
-        score: Math.random() * 100
-      },
-      {
-        type: "homework",
-        score: Math.random() * 100
-      },
-      {
-        type: "home",
-        score: Math.random() * 100
-      }
-    ],
-    class_id: Math.floor(Math.random() * 500) + 1
-  };
 }
 
 async function doOperation(operationName, operationFn, collection, mongoClient) {

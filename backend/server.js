@@ -9,7 +9,7 @@ const { Server } = require('socket.io');
 const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
 const childProc = require("child_process");
-const { addEvent, printWithTimestamp } = require('./common');
+const { addEvent, generateInsertDoc, printWithTimestamp } = require('./common');
 const config = require('./config');
 
 // when changing the port, make sure to update the port in DSIM_APP_HOST in frontend/public/index.html

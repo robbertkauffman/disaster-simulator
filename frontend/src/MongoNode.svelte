@@ -97,7 +97,7 @@
   }
 </script>
 
-<div class="col-3 text-center container">
+<div class="text-center container">
   <figure class="figure" class:blink={isChangingState} data-tooltip={name}>
     <img src="img/{getImagePath(type)}" class="figure-img" alt="{type} node" bind:this={iconElm} />
     <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
@@ -192,6 +192,7 @@
 
   .container {
     position: relative;
+    z-index: 999;
   }
 
   .context-menu {

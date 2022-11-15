@@ -7,6 +7,9 @@
   export let nodes = [];
   export let socket;
 
+  let regions = new Set();
+  let colWidth = 3;
+
   onMount(async () => {
     await getClusterType();
 		await getClusterConfig();
@@ -43,13 +46,29 @@
             } else {
               host = node.host;
             }
+            
+            const newNode = {
+              host: host,
+              type: 'Unknown',
+              connectedToApp: false,
+              syncSourceHost: node.syncSourceHost,
+              altHost: node.host
+            };
+
             // Atlas clusters have auto-populated tags, but non-Atlas clusters usually don't
             if (node.tags && node.tags.region) {
-              nodes = [...nodes, { host: host, type: 'Unknown', region: node.tags.region, connectedToApp: false }];
-            } else {
-              nodes = [...nodes, { host: host, type: 'Unknown', connectedToApp: false }];
+              newNode.region = node.tags.region,
+              regions.add(node.tags.region);
             }
+
+            nodes = [...nodes, newNode];
           }
+        }
+
+        if (regions.size > 1) {
+          colWidth = Math.max(1, Math.floor(12 / regions.size));
+        } else {
+          colWidth = Math.max(1, Math.floor(12 / nodes.length));
         }
       }
     } catch(e) {
@@ -90,25 +109,57 @@
   }
 
   function drawClusterTopologyLines() {
-    for (let i = 1; i < nodes.length; i++) {
-      if (nodes[i - 1].iconElm && nodes[i].iconElm) {
-        new LeaderLine(
-          nodes[i - 1].iconElm,
-          nodes[i].iconElm,
-          {
-            color: 'grey',
-            startPlug: 'behind',
-            endPlug: 'behind'
-          }
-        );
+    for (const targetNode of nodes) {
+      if (targetNode.iconElm && targetNode.syncSourceHost) {
+        const sourceNode = nodes.find(node => node.altHost === targetNode.syncSourceHost);
+        if (sourceNode && sourceNode.iconElm) {
+          new LeaderLine(
+            sourceNode.iconElm,
+            targetNode.iconElm,
+            {
+              color: 'grey',
+              startPlug: 'behind',
+              endPlug: 'behind'
+            }
+          );
+        }
       }
     }
+    // for (let i = 1; i < nodes.length; i++) {
+    //   if (nodes[i - 1].iconElm && nodes[i].iconElm) {
+    //     new LeaderLine(
+    //       nodes[i - 1].iconElm,
+    //       nodes[i].iconElm,
+    //       {
+    //         color: 'grey',
+    //         startPlug: 'behind',
+    //         endPlug: 'behind'
+    //       }
+    //     );
+    //   }
+    // }
   }
 </script>
 
-{#each nodes as node (node.host)}
-  <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
-             isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
-             appServerEndpoint={appServerEndpoint} clusterType={clusterType}
-             bind:iconElm={node.iconElm}/>
-{/each}
+{#if regions.size > 1}
+  <!-- can't iterate over a set so need to convert to array -->
+  {#each [...regions] as region}
+    <div class="col-{colWidth}">
+      {#each nodes.filter(node => node.region === region) as node (node.host)}
+        <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
+                  isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
+                  appServerEndpoint={appServerEndpoint} clusterType={clusterType}
+                  bind:iconElm={node.iconElm}/>
+      {/each}
+    </div>
+  {/each}
+{:else}
+  {#each nodes as node (node.host)}
+    <div class="col-{colWidth}">
+      <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
+                isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
+                appServerEndpoint={appServerEndpoint} clusterType={clusterType}
+                bind:iconElm={node.iconElm}/>
+    </div>
+  {/each}
+{/if}

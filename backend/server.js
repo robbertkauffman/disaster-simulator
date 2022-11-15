@@ -77,6 +77,16 @@ app.get('/getClusterType', (req, res) => res.send(clusterType));
 app.get('/rsConfig', async (req, res) => {
   try {
     const rsConf = await mongoClient.db('local').collection('system.replset').findOne();
+    // add syncSourceHost from rs.status()
+    const rsStatus = await mongoClient.db('admin').command({ replSetGetStatus: 1 });
+    if (rsConf && rsConf.members && rsStatus && rsStatus.members) {
+      for (const member of rsConf.members) {
+        const statusMember = rsStatus.members.find(statusMember => statusMember.name === member.host);
+        if (statusMember && statusMember.syncSourceHost) {
+          member.syncSourceHost = statusMember.syncSourceHost;
+        }
+      }
+    }
     res.json(rsConf);
   } catch (e) {
     res.status(500).send(`Error running rs.config command: ${e}`);

@@ -6,6 +6,8 @@ const QUERY_INTERVAL = 0;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';
 
+let skipLoggingFirstRequest = true;
+
 if (process.argv[2]) {
   const options = JSON.parse(process.argv[2]);
   const queryType = process.argv[3];
@@ -63,7 +65,12 @@ async function doOperation(operationName, operationFn, collection, mongoClient) 
     await operationFn(collection, docs[operationName]);
     const endTime = new Date().getTime();
     const latency = endTime - startTime;
-    await logRequest(startTime, operationName, latency, true, mongoClient);
+    // don't log first request as it can have higher initial latency that can skew the line chart
+    if (!skipLoggingFirstRequest) {
+      await logRequest(startTime, operationName, latency, true, mongoClient);
+    } else {
+      skipLoggingFirstRequest = false;
+    }
   } catch (e) {
     const endTime = new Date().getTime();
     printWithTimestamp(`Error while doing ${operationName} operation!: ${e}`);

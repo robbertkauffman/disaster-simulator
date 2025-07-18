@@ -1,16 +1,16 @@
-<script>
+<script lang="ts">
   import { afterUpdate } from 'svelte';
 
-  export let mongoNodes;
+  export let mongoNodes: MongoNodeData[];
 
-  let appServerIconElm;
-  let topologyLine;
+  let appServerIconElm: HTMLElement;
+  let topologyLine: any;
 
   afterUpdate(() => {
     drawAppTopologyLines();
   });
 
-  function drawAppTopologyLines() {
+  function drawAppTopologyLines(): void {
     if (mongoNodes.length > 1 ) {
       const idx = mongoNodes.findIndex(node => node.connectedToApp);
       if (idx !== -1 && mongoNodes[idx].iconElm) {

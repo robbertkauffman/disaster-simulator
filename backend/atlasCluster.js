@@ -1,7 +1,8 @@
-const fetch = require('node-fetch');
-const DigestFetch = require('digest-fetch');
+import fetch from 'node-fetch';
+import DigestFetch from 'digest-fetch';
+import { addEvent, printWithTimestamp } from './common.js';
 
-module.exports = function(app, io, clusterConfig) {
+export default function(app, io, clusterConfig) {
   app.post('/testFailover', async (req, res) => {
     try {
       const client = new DigestFetch(clusterConfig.apiKeyPublic, clusterConfig.apiKeyPrivate); 

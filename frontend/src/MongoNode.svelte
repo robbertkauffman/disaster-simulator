@@ -1,20 +1,20 @@
-<script>
+<script lang="ts">
   import { fade } from 'svelte/transition';
   import { isRunning } from './store';
 
-  export let clusterType;
-  export let type;
-  export let name;
-	export let region;
-  export let isChangingState = false;
-  export let isNewPrimary = false;
-  export let goalState = '';
-  export let iconElm = undefined;
-  export let appServerEndpoint;
-  let state;
-  let lastAction;
+  export let clusterType: string;
+  export let type: string;
+  export let name: string;
+	export let region: string | undefined;
+  export let isChangingState: boolean = false;
+  export let isNewPrimary: boolean = false;
+  export let goalState: string = '';
+  export let iconElm: HTMLElement | undefined = undefined;
+  export let appServerEndpoint: string;
+  let state: string;
+  let lastAction: string;
 
-  function getImagePath(type) {
+  function getImagePath(type: string): string {
     switch (type) {
       case 'Primary':
         return 'primary-active.png';
@@ -38,12 +38,12 @@
     setTimeout(resetState, 100);
   }
 
-  function resetState() {
-    state = undefined;
-    goalState = undefined;
+  function resetState(): void {
+    state = '';
+    goalState = '';
   }
 
-  async function doPostRequest(apiPath, changingState, _goalState) {
+  async function doPostRequest(apiPath: string, changingStateMsg: string, _goalState: string): Promise<boolean> {
     try {
       const resp = await fetch(appServerEndpoint + '/' + apiPath, {
         method: 'POST',
@@ -53,7 +53,7 @@
       if (resp.ok) {
         // const body = await resp.json();
         isChangingState = true;
-        state = changingState;
+        state = changingStateMsg;
         goalState = _goalState;
         lastAction = apiPath;
         return true;
@@ -64,23 +64,23 @@
     return false;
   }
 
-  function stepDown() {
+  function stepDown(): void {
     doPostRequest('stepDown', 'Node is stepping down', 'Node has stepped down');
   }
 
-  function killNode() {
+  function killNode(): void {
     doPostRequest('killNode', 'Killing node', 'Node has been killed');
   }
 
-  function startNode() {
+  function startNode(): void {
     doPostRequest('startNode', 'Starting node', 'Node has started');
   }
 
-  function reconnectNode() {
+  function reconnectNode(): void {
     doPostRequest('reconnectNode', 'Reconnecting node', 'Node has reconnected');
   }
 
-  function disconnectNode() {
+  function disconnectNode(): void {
     doPostRequest('disconnectNode', 'Disconnecting node', 'Node has disconnected');
   }
 

@@ -1,24 +1,24 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
-  import { getTimestamp } from './common.js'
+  import { getTimestamp } from './common'
 
-  export let socket;
+  export let socket: Socket;
 
-  let requestLog = [];
+  let requestLog: Request[] = [];
 
   onMount(() => {
     listenForSlowFailedRequest();
   });
 
-  function listenForSlowFailedRequest() {
-    socket.on('logSlowFailedRequest', function(data) {
+  function listenForSlowFailedRequest(): void {
+    socket.on('logSlowFailedRequest', function(data: Request) {
       if (data) {
         addRequest(data);
       }
     });
   }
 
-  function addRequest(request) {
+  function addRequest(request: Request): void {
     if (request.ts) {
       request.ts = new Date(request.ts);
     } else {
@@ -37,7 +37,7 @@
 {/if}
 {#each requestLog as request}
   <p class="log" class:text-danger={!request.success}>
-    <span>{getTimestamp(request.ts)}:</span> 
+    <span>{request.ts ? getTimestamp(request.ts) : ''}:</span>
     '{request.operation}' {request.success ? 'in' : 'failed after'} {request.latency}ms...
   </p>
 {/each}

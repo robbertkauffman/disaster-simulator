@@ -1,11 +1,11 @@
-const Docker = require('dockerode');
-const { addEvent, printWithTimestamp } = require('./common');
+import Docker from 'dockerode';
+import { addEvent, printWithTimestamp } from './common.js';
 
 const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.local/share/containers/podman/machine/podman-machine-default/podman.sock';
 const dockerClient = new Docker({socketPath: dockerSocketPath});
 const CONTAINER_NETWORK_NAME = 'containers_mongoCluster';
 
-module.exports = function(app, io, mongoClient) {
+export default function(app, io, mongoClient) {
   app.post('/stepDown', async (req, res) => {
     try {
       addEvent(`Stepping down primary...`, io);

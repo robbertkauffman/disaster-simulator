@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import { isRunning } from './store';
   import { slide } from 'svelte/transition';
   import StartAndPauseButtons from "./StartAndPauseButtons.svelte";
 
-  export let appServerEndpoint;
-	export let retryReads = true;
-  export let retryWrites = true;
-  export let readPreference = 'primary';
-  export let readConcern = 'local';
-  export let writeConcern = 'majority';
+  export let appServerEndpoint: string;
+	export let retryReads: boolean = true;
+  export let retryWrites: boolean = true;
+  export let readPreference: string = 'primary';
+  export let readConcern: string = 'local';
+  export let writeConcern: string = 'majority';
 
-  let moreOptions = false;
+  let moreOptions: boolean = false;
 
-  function handleClickMoreOptions() {
+  function handleClickMoreOptions(): void {
     moreOptions = !moreOptions;
   }
 </script>

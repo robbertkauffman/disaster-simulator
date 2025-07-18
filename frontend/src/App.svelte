@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
-	import { isRunning } from './store.js';
+	import { isRunning } from './store';
 	import { io } from "socket.io-client";
 	import AppServer from './AppServer.svelte';
 	import Charts from './Charts.svelte';
@@ -9,34 +9,31 @@
 	import MongoClusterEventLog from './MongoClusterEventLog.svelte';
 	import SlowFailedQueryLog from './SlowFailedQueryLog.svelte';
 	import Stats from './Stats.svelte';
-	
+
 	// global variable DSIM_APP_HOST is set in frontend/public/index.html
-	const appServerEndpoint = DSIM_APP_HOST;
-	let mongoNodes = [];
-	let isRunningVal;
-	let startDate;
-	let socket;
+	const appServerEndpoint: string = DSIM_APP_HOST;
+	let mongoNodes: MongoNodeData[] = [];
+	let startDate: Date;
+	let socket: Socket;
 
 	onMount(() => {
 		connectWs();
 	});
 
-	function connectWs() {
+	function connectWs(): void {
 		socket = io(appServerEndpoint);
-		socket.io.on('error', (error) => {
+		socket.io.on('error', (error: any) => {
 			console.log(`socket error: ${error}`);
 		});
 	}
 
-	isRunning.subscribe(value => {
-		isRunningVal = value;
-		if (value) {
-			// use start date 3 seconds from now
-			// to remove an initial peak in latency when the app initaties connection to the cluster
-			startDate = new Date();
-			startDate.setSeconds(startDate.getSeconds() + 3);
-		}
-	});
+	// Reactive statement to handle isRunning changes
+	$: if ($isRunning) {
+		// use start date 3 seconds from now
+		// to remove an initial peak in latency when the app initiates connection to the cluster
+		startDate = new Date();
+		startDate.setSeconds(startDate.getSeconds() + 3);
+	}
 
 </script>
 
@@ -62,7 +59,7 @@
 				</div>
 			</div>
 		</div>
-		{#if isRunningVal}
+		{#if $isRunning}
 			<div class="row justify-content-md-center">
 				<Stats socket={socket}/>
 			</div>

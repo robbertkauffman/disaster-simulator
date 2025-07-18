@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
-  import { getTimestamp } from './common.js'
+  import { getTimestamp } from './common'
 
-  export let socket;
+  export let socket: Socket;
 
-  let events = [];
+  let events: ClusterEvent[] = [];
 
   onMount(() => {
     listenForEvents();
   });
 
-  function listenForEvents() {
+  function listenForEvents(): void {
     if (socket) {
-      socket.on('logEvent', function(data) {
+      socket.on('logEvent', function(data: ClusterEvent) {
         if (data) {
           addEvent(data);
         }
@@ -20,17 +20,17 @@
     }
   }
 
-  function addEvent(event) {
+  function addEvent(event: ClusterEvent): void {
     if (event.date) {
       event.date = new Date(event.date);
     } else {
       event.date = new Date();
     }
     // sometimes mongo driver sends events multiple times
-    // only add event if not a duplicate 
+    // only add event if not a duplicate
     // (same message and send within half a second of other event)
     if (events.length === 0 || event.message !== events[0].message ||
-        events[0].date.getTime() + 500 < event.date.getTime()) {
+        (events[0].date && event.date && events[0].date.getTime() + 500 < event.date.getTime())) {
       if (events.length > 9) {
         events.pop();
       }
@@ -45,12 +45,14 @@
     -
   {/if}
   <table class="text-start float-end">
-    {#each events as event}
-      <tr>
-        <td class="text-end">{event.message}</td>
-        <td><span class="text-muted">{getTimestamp(event.date)}</span></td>
-      </tr>
-    {/each}
+    <tbody>
+      {#each events as event}
+        <tr>
+          <td class="text-end">{event.message}</td>
+          <td><span class="text-muted">{event.date ? getTimestamp(event.date) : ''}</span></td>
+        </tr>
+      {/each}
+    </tbody>
   </table>
 </div>
 

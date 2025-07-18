@@ -1,41 +1,41 @@
-<script>
-  import { isRunning } from './store.js';
+<script lang="ts">
+  import { isRunning } from './store';
 
-  export let appServerEndpoint;
-  export let retryReads;
-  export let retryWrites;
-  export let readPreference;
-  export let readConcern;
-  export let writeConcern;
+  export let appServerEndpoint: string;
+  export let retryReads: boolean;
+  export let retryWrites: boolean;
+  export let readPreference: string;
+  export let readConcern: string;
+  export let writeConcern: string;
 
-  const START_PATH = '/start';
-  const STOP_PATH = '/stop';
+  const START_PATH: string = '/start';
+  const STOP_PATH: string = '/stop';
 
-  let isPaused = false;
+  let isPaused: boolean = false;
 
-  function handleClickStartStop() {
-    isRunning.update(isRunning => {
+  function handleClickStartStop(): void {
+    isRunning.update((isRunning: boolean) => {
       if (!isRunning) {
         start();
       } else {
         stop();
       }
-      
+
       return !isRunning;
     });
   }
 
-  function handleClickPauseResume() {
+  function handleClickPauseResume(): boolean {
     if (isPaused) {
       start(true);
     } else {
       stop();
     }
     isPaused = !isPaused;
-    return !isRunning;
+    return !$isRunning;
   }
 
-  async function start(resume = false) {
+  async function start(resume: boolean = false): Promise<void> {
     try {
       let url = `${appServerEndpoint}${START_PATH}?retryReads=${retryReads}&retryWrites=${retryWrites}&` +
                 `readPreference=${readPreference}&readConcern=${readConcern}&writeConcern=${writeConcern}`;
@@ -54,7 +54,7 @@
     };
   }
 
-  async function stop() {
+  async function stop(): Promise<void> {
     try {
       const resp = await fetch(appServerEndpoint + STOP_PATH);
       const data = await resp.text();

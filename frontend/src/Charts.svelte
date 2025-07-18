@@ -1,13 +1,13 @@
-<script>
+<script lang="ts">
   import Chart from 'chart.js/auto';
   import 'chartjs-adapter-luxon';
   import { onMount } from 'svelte';
 
-  export let socket;
+  export let socket: Socket;
 
   // visualize max 2 minutes of data
-  const MAX_DATAPOINTS = 120;
-  let chart;
+  const MAX_DATAPOINTS: number = 120;
+  let chart: Chart;
 
   // Chart.defaults.font.family = "var(--bs-font-sans-serif)";
   Chart.defaults.font.family = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"';
@@ -70,26 +70,26 @@
     listenForLogRequest();
   });
 
-  function listenForLogRequest() {
-    socket.on('logRequest', data => {
+  function listenForLogRequest(): void {
+    socket.on('logRequest', (data: Request) => {
       if (data) {
         addRequest(data);
       }
     });
   }
 
-  function addRequest(request) {
+  function addRequest(request: Request): void {
     if (request.ts) {
       request.ts = new Date(request.ts);
     } else {
       request.ts = new Date();
     }
 
-    const idx = chart.data.datasets.findIndex(dataset => dataset.label === request.operation);
+    const idx = chart.data.datasets.findIndex((dataset: any) => dataset.label === request.operation);
     if (idx !== -1) {
       const dataset = chart.data.datasets[idx];
-      dataset.data.push({
-        x: request.ts,
+      (dataset.data as any[]).push({
+        x: request.ts?.getTime() || Date.now(),
         y: Math.max(...request.latency)
       });
       // only visualize recent data
@@ -98,7 +98,7 @@
       }
       chart.update();
     } else {
-      console.log(`Error while adding data to chart: no dataset defined for operation type: ${operationType}`);
+      console.log(`Error while adding data to chart: no dataset defined for operation type: ${request.operation}`);
     }
   }
 </script>

@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
 
-  export let socket;
-  let stats = {};
-  let failed = 0;
+  export let socket: Socket;
+  let stats: Stats = {};
+  let failed: number = 0;
 
   onMount(() => {
     listenForUpdateStats();
     listenForSlowFailedRequest();
   });
 
-  function listenForUpdateStats() {
+  function listenForUpdateStats(): void {
     if (socket) {
-      socket.on('updateStats', function(data) {
+      socket.on('updateStats', function(data: Stats[]) {
         if (data && data.length === 1) {
           stats = data[0];
         }
@@ -20,8 +20,8 @@
     }
   }
 
-  function listenForSlowFailedRequest() {
-    socket.on('logSlowFailedRequest', function(data) {
+  function listenForSlowFailedRequest(): void {
+    socket.on('logSlowFailedRequest', function(data: Request) {
       if (data && data.success === false) {
         failed++;
       }
@@ -34,7 +34,7 @@
     <p>Average latency:</p>
     <p class="h5">
       {#if stats.avg}
-        {parseFloat(stats.avg).toFixed(2)} ms
+        {stats.avg.toFixed(2)} ms
       {:else}
         -
       {/if}

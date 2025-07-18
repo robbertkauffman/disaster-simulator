@@ -1,11 +1,11 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
   import MongoNode from './MongoNode.svelte';
 
-  export let appServerEndpoint;
-  export let clusterType = 'local';
-  export let nodes = [];
-  export let socket;
+  export let appServerEndpoint: string;
+  export let clusterType: string = 'local';
+  export let nodes: MongoNodeData[] = [];
+  export let socket: Socket;
 
   onMount(async () => {
     await getClusterType();
@@ -14,7 +14,7 @@
     getNodeTypes();
 	});
 
-  async function getClusterType() {
+  async function getClusterType(): Promise<void> {
     try {
       const resp = await fetch(appServerEndpoint + '/getClusterType');
       const respText = await resp.text();
@@ -27,7 +27,7 @@
     }
   }
 
-	async function getClusterConfig() {
+	async function getClusterConfig(): Promise<void> {
     try {
       const res = await fetch(appServerEndpoint + '/rsConfig');
       const rsConfig = await res.json();
@@ -45,9 +45,22 @@
             }
             // Atlas clusters have auto-populated tags, but non-Atlas clusters usually don't
             if (node.tags && node.tags.region) {
-              nodes = [...nodes, { host: host, type: 'Unknown', region: node.tags.region, connectedToApp: false }];
+              nodes = [...nodes, {
+                host: host,
+                type: 'Unknown',
+                region: node.tags.region,
+                connectedToApp: false,
+                isChangingState: false,
+                isNewPrimary: false
+              }];
             } else {
-              nodes = [...nodes, { host: host, type: 'Unknown', connectedToApp: false }];
+              nodes = [...nodes, {
+                host: host,
+                type: 'Unknown',
+                connectedToApp: false,
+                isChangingState: false,
+                isNewPrimary: false
+              }];
             }
           }
         }
@@ -57,12 +70,12 @@
     }
 	}
 
-  function getNodeTypes() {
+  function getNodeTypes(): void {
     socket.emit('getNodeTypes');
   }
 
-  function listenForNodeChanges() {
-    socket.on('updateNodeType', function(updatedNode) {
+  function listenForNodeChanges(): void {
+    socket.on('updateNodeType', function(updatedNode: any) {
       if (updatedNode && updatedNode.address && updatedNode.oldType && updatedNode.newType) {
         const type = updatedNode.newType;
         const idx = nodes.findIndex(node => node.host === updatedNode.address);
@@ -89,7 +102,7 @@
     });
   }
 
-  function drawClusterTopologyLines() {
+  function drawClusterTopologyLines(): void {
     for (let i = 1; i < nodes.length; i++) {
       if (nodes[i - 1].iconElm && nodes[i].iconElm) {
         new LeaderLine(

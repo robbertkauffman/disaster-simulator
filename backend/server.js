@@ -1,16 +1,16 @@
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import { MongoClient } from 'mongodb';
+import childProc from 'child_process';
+import { addEvent, generateInsertDoc, printWithTimestamp } from './common.js';
+import config from './config.js';
+
 const app = express();
-const http = require('http');
 const httpServer = http.createServer(app);
 app.use(express.json());
 app.use(express.static('frontend/public'));
-const { Server } = require('socket.io');
 const io = new Server(httpServer);
-const { MongoClient } = require('mongodb');
-const childProc = require("child_process");
-const { addEvent, printWithTimestamp } = require('./common');
-const config = require('./config');
 
 // when changing the port, make sure to update the port in DSIM_APP_HOST in frontend/public/index.html
 const APP_PORT = process.env.PORT || 8080;
@@ -30,19 +30,23 @@ let threads = [];
 let requestLog = {};
 const nodeTypes = {};
 
-// need to init mongo client here as it's being passed to atlasCluster and localCluster modules
-mongoClient = new MongoClient(config.connectionString);
-// auto detect if Atlas cluster or local cluster is configured
-if (!clusterType && config.atlasCluster && config.atlasCluster.groupId && 
-    config.atlasCluster.clusterName && config.atlasCluster.apiKeyPublic && 
-    config.atlasCluster.apiKeyPrivate && config.connectionString.indexOf('mongodb.net') !== -1) {
-  clusterType = 'atlas';
-  require('./atlasCluster')(app, io, config.atlasCluster);
-} else {
-  clusterType = 'local';
-  require('./localCluster')(app, io, mongoClient);
+async function initializeCluster() {
+  // need to init mongo client here as it's being passed to atlasCluster and localCluster modules
+  mongoClient = new MongoClient(config.connectionString);
+  // auto detect if Atlas cluster or local cluster is configured
+  if (!clusterType && config.atlasCluster && config.atlasCluster.groupId &&
+      config.atlasCluster.clusterName && config.atlasCluster.apiKeyPublic &&
+      config.atlasCluster.apiKeyPrivate && config.connectionString.indexOf('mongodb.net') !== -1) {
+    clusterType = 'atlas';
+    const atlasCluster = await import('./atlasCluster.js');
+    atlasCluster.default(app, io, config.atlasCluster);
+  } else {
+    clusterType = 'local';
+    const localCluster = await import('./localCluster.js');
+    localCluster.default(app, io, mongoClient);
+  }
+  console.log(`Cluster type is ${clusterType}`);
 }
-console.log(`Cluster type is ${clusterType}`);
 
 app.get('/start', (req, res) => {
   if (!isRunning) {
@@ -91,7 +95,7 @@ async function start(resume, options) {
   }
 
   threads = [];
-  threadCount = 0;
+  let threadCount = 0;
   for (let i = 0; i < NR_THREADS; i++) {
     // run inserts and finds in seperate threads, 
     // otherwise only one query type will show as being slow/failing
@@ -245,8 +249,7 @@ function modifyTypeName(type) {
 function addWsListeners() {
   io.on('connection', (socket) => {
     // front-end retrieves latest node types/status during initialization
-    socket.on('getNodeTypes', () => {
-      for (node in nodeTypes) {
+    socket.on('getNodeTypes', () => {      for (const node in nodeTypes) {
         io.emit('updateNodeType', {
           address: node,
           oldType: nodeTypes[node].oldType,
@@ -264,13 +267,15 @@ function addWsListeners() {
   });
 }
 
-httpServer.listen(APP_PORT, () => {
+httpServer.listen(APP_PORT, async () => {
+  await initializeCluster();
+
   mongoClient.on('serverDescriptionChanged', event => {
     onNodeChange(event);
   });
   generateSampleData(mongoClient);
   createIndexes(mongoClient);
-  
+
   addWsListeners();
 
   console.log(`listening on ${APP_PORT}`);

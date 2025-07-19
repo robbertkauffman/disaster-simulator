@@ -1,6 +1,7 @@
+require('dotenv').config({ path: __dirname + '/.env' });
+
 const { MongoClient } = require('mongodb');
 const { generateInsertDoc, printWithTimestamp } = require('./common');
-const config = require('./config');
 
 const QUERY_INTERVAL = 0;
 const QUERY_DB = 'sample_training';
@@ -21,7 +22,7 @@ if (process.argv[2]) {
 }
 
 async function start(options, queryType) {
-  const mongoClient = new MongoClient(config.connectionString, options);
+  const mongoClient = new MongoClient(process.env.MONGODB_CONNECTION_STRING, options);
   const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
   printWithTimestamp(`Started child process for querying ${queryType} MongoDB...`);
   

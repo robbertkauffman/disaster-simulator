@@ -1,3 +1,5 @@
+require('dotenv').config({ path: __dirname + '/.env' });
+
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -10,7 +12,6 @@ const io = new Server(httpServer);
 const { MongoClient } = require('mongodb');
 const childProc = require("child_process");
 const { addEvent, generateInsertDoc, printWithTimestamp } = require('./common');
-const config = require('./config');
 
 // when changing the port, make sure to update the port in DSIM_APP_HOST in frontend/public/index.html
 const APP_PORT = process.env.PORT || 8080;
@@ -31,13 +32,13 @@ let requestLog = {};
 const nodeTypes = {};
 
 // need to init mongo client here as it's being passed to atlasCluster and localCluster modules
-mongoClient = new MongoClient(config.connectionString);
+mongoClient = new MongoClient(process.env.MONGODB_CONNECTION_STRING);
 // auto detect if Atlas cluster or local cluster is configured
-if (!clusterType && config.atlasCluster && config.atlasCluster.groupId && 
-    config.atlasCluster.clusterName && config.atlasCluster.apiKeyPublic && 
-    config.atlasCluster.apiKeyPrivate && config.connectionString.indexOf('mongodb.net') !== -1) {
+if (!clusterType && process.env.ATLAS_GROUP_ID &&
+    process.env.ATLAS_CLUSTER_NAME && process.env.ATLAS_API_KEY_PUBLIC &&
+    process.env.ATLAS_API_KEY_PRIVATE && process.env.MONGODB_CONNECTION_STRING.indexOf('mongodb.net') !== -1) {
   clusterType = 'atlas';
-  require('./atlasCluster')(app, io, config.atlasCluster);
+  require('./atlasCluster')(app, io);
 } else {
   clusterType = 'local';
   require('./localCluster')(app, io, mongoClient);

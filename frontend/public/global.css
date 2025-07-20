@@ -1,0 +1,56 @@
+.context-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  text-align: center;
+  z-index: 999;
+}
+
+.context-menu .menu {
+  display: none;
+  position: absolute;
+  margin-top: -3px;
+  list-style: none;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0 10px 10px 10px;
+  box-shadow: 0 10px 20px rgb(50 50 50 / 25%);
+  padding: 10px 0;
+}
+
+.context-menu:hover .menu {
+  display: block;
+}
+
+.context-menu .menu-button {
+  background-color: white;
+}
+
+.context-menu:hover .menu-button {
+  color: darkgreen;
+}
+
+.context-menu .menu > li {
+  min-width: 162px;
+}
+
+.context-menu .menu > li > button {
+  padding: 10px 30px 10px 15px;
+  width: 100%;
+  display: flex;
+  text-decoration: none;
+  color: #000;
+  font-weight: 500;
+  transition: 0.5s linear;
+  border: none;
+  background-color: transparent;
+}
+
+.context-menu .menu > li > button:hover {
+  background-color: #ced4da;
+  color: darkgreen;
+}
+
+.context-menu .menu > li > button > i {
+  padding-right: 10px;
+}

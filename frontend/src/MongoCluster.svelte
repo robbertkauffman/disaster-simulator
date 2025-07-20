@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+  import { isRunning } from './store';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
@@ -8,7 +9,6 @@
   export let socket;
 
   let regions = new Set();
-  let colWidth = 3;
 
   onMount(async () => {
     await getClusterType();
@@ -63,12 +63,6 @@
 
             nodes = [...nodes, newNode];
           }
-        }
-
-        if (regions.size > 1) {
-          colWidth = Math.max(1, Math.floor(12 / regions.size));
-        } else {
-          colWidth = Math.max(1, Math.floor(12 / nodes.length));
         }
       }
     } catch(e) {
@@ -125,41 +119,35 @@
         }
       }
     }
-    // for (let i = 1; i < nodes.length; i++) {
-    //   if (nodes[i - 1].iconElm && nodes[i].iconElm) {
-    //     new LeaderLine(
-    //       nodes[i - 1].iconElm,
-    //       nodes[i].iconElm,
-    //       {
-    //         color: 'grey',
-    //         startPlug: 'behind',
-    //         endPlug: 'behind'
-    //       }
-    //     );
-    //   }
-    // }
   }
 </script>
 
-{#if regions.size > 1}
-  <!-- can't iterate over a set so need to convert to array -->
-  {#each [...regions] as region}
-    <div class="col-{colWidth}">
-      {#each nodes.filter(node => node.region === region) as node (node.host)}
-        <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
+<!-- can't iterate over a set so need to convert to array -->
+{#each [...regions] as region}
+  <div class="row region align-items-center">
+      <div class="col-3 region-label">
+        {region}
+      </div>
+    {#each nodes.filter(node => node.region === region) as node (node.host)}
+      <div class="col-{Math.floor(9 / nodes.filter(node => node.region == region).length)}">
+        <MongoNode name={node.host.split(':')[0]} type={node.type}
                   isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
                   appServerEndpoint={appServerEndpoint} clusterType={clusterType}
                   bind:iconElm={node.iconElm}/>
-      {/each}
-    </div>
-  {/each}
-{:else}
-  {#each nodes as node (node.host)}
-    <div class="col-{colWidth}">
-      <MongoNode name={node.host.split(':')[0]} type={node.type} region={node.region}
-                isChangingState={node.isChangingState} isNewPrimary={node.isNewPrimary}
-                appServerEndpoint={appServerEndpoint} clusterType={clusterType}
-                bind:iconElm={node.iconElm}/>
-    </div>
-  {/each}
-{/if}
+      </div>
+    {/each}
+  </div>
+{/each}
+
+<style>
+  .region-label {
+    position: relative;
+  }
+
+  .region {
+    background-color: #eee;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    padding-top: 10px;
+  }
+</style>

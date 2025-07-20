@@ -5,7 +5,6 @@
   export let clusterType;
   export let type;
   export let name;
-	export let region;
   export let isChangingState = false;
   export let isNewPrimary = false;
   export let goalState = '';
@@ -97,10 +96,10 @@
   }
 </script>
 
-<div class="text-center container">
-  <figure class="figure" class:blink={isChangingState} data-tooltip={name}>
+<div class="node">
+  <figure class="figure" class:blink={isChangingState} data-tooltip={type + ': ' +name}>
     <img src="img/{getImagePath(type)}" class="figure-img" alt="{type} node" bind:this={iconElm} />
-    <figcaption class="figure-caption">{type} {#if region} — {region}{/if}</figcaption>
+    <!-- <figcaption class="figure-caption">{type}</figcaption> -->
   </figure>
   {#if $isRunning && !isChangingState}
     {#if clusterType === 'local' || (clusterType === 'atlas' && type === 'Primary')}
@@ -135,9 +134,9 @@
   {/if}
   {#if $isRunning && state}
     {#if state !== goalState}
-      <p>{state}...</p>
+      <p class="node-state">{state}...</p>
     {:else}
-      <p out:fade="{{delay: 5000, duration: 5000}}">{state}</p>
+      <p class="node-state" out:fade="{{delay: 5000, duration: 5000}}">{state}</p>
     {/if}
   {/if}
 </div>
@@ -148,9 +147,16 @@
     width: 40px;
   }
 
-  .figure-caption {
-    margin-top: 15px;
+  .node {
+    position: relative;
+    margin: 1rem 0;
+    height: 40px;
+    width: 40px;
   }
+
+  /* .figure-caption {
+    margin-top: 15px;
+  } */
 
   .blink {
     -webkit-animation: blink 3s infinite both;
@@ -174,7 +180,7 @@
   }
 
   [data-tooltip]:before {
-    z-index: 9999;
+    z-index: 998;
     position: absolute;
     display: none;
     content: attr(data-tooltip);
@@ -190,65 +196,14 @@
     display: block;
   }
 
-  .container {
-    position: relative;
-    z-index: 999;
-  }
-
-  .context-menu {
-    position: relative;
-    top: -65px;
-    text-align: center;
-    z-index: 999;
-  }
-
-  .menu {
-    display: none;
+  .node-state {
     position: absolute;
-    right: 0;
-    margin-top: -3px;
-    list-style: none;
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0 10px 10px 10px;
-    box-shadow: 0 10px 20px rgb(50 50 50 / 25%);
-    padding: 10px 0;
-  }
-
-  .context-menu:hover .menu {
-    display: block;
-  }
-
-  .menu-button {
-    background-color: white;
-  }
-
-  .context-menu:hover .menu-button {
-    color: darkgreen;
-  }
-
-  .menu > li {
-    min-width: 150px;
-  }
-
-  .menu > li > button {
-    padding: 10px 30px 10px 15px;
-    width: 100%;
-    display: flex;
-    text-decoration: none;
-    color: #000;
-    font-weight: 500;
-    transition: 0.5s linear;
-    border: none;
-    background-color: transparent;
-  }
-
-  .menu > li > button:hover {
-    background-color: #ced4da;
-    color: darkgreen;
-  }
-
-  .menu > li > button > i {
-    padding-right: 10px;
+    z-index: 9999;
+    text-shadow:   
+        0 0 5px #ffffff,  
+        0 0 10px #ffffff,  
+        0 0 20px #ffffff,  
+        0 0 40px #ffffff,  
+        0 0 80px #ffffff;  
   }
 </style>

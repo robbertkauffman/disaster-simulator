@@ -150,8 +150,8 @@ async function createIndexes(mongoClient) {
 
 async function generateSampleData(mongoClient) {
   const collection = mongoClient.db(QUERY_DB).collection(QUERY_COLLECTION);
-  const stats = await collection.stats();
-  if (stats && stats.count === 0) {
+  const count = await collection.estimatedDocumentCount();
+  if (count && count === 0) {
     const docs = [];
     for (let i = 1; i < 10000; i++) {
       docs.push(generateInsertDoc(i));

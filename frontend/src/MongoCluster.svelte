@@ -81,6 +81,7 @@
         const idx = nodes.findIndex(node => node.host === updatedNode.address);
         if (idx !== -1) {
           if (type === 'Primary') {
+            resetPrimary();
             nodes[idx].connectedToApp = true;
             drawClusterTopologyLines();
             // don't trigger primary elected notification at initialization
@@ -98,6 +99,14 @@
         } else {
           console.log(`Couldn't find node ${updatedNode.address} in rs.config for update`);
         }
+      }
+    });
+  }
+
+  function resetPrimary() {
+    nodes.forEach(node => {
+      if (node.type === 'Primary') {
+        node.type = 'Secondary';
       }
     });
   }

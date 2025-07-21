@@ -22,7 +22,7 @@
   display: block;
 }
 
-.context-menu .menu-button {
+.context-menu .menu-button::before {
   background-color: white;
 }
 

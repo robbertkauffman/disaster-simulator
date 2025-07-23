@@ -9,10 +9,15 @@
   export let socket;
 
   let regions = new Set();
+  let regionStatus = {};
+  let pollInterval;
 
   onMount(async () => {
     await getClusterType();
 		await getClusterConfig();
+    if (clusterType === 'atlas') {
+      await getRegionalOutageStatus();
+    }
     listenForNodeChanges();
     getNodeTypes();
 	});
@@ -129,13 +134,102 @@
       }
     }
   }
+
+  async function startRegionalOutage(regionName) {
+    try {
+      const resp = await fetch(appServerEndpoint + '/startRegionalOutage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regionName: regionName })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.outageFilters && data.outageFilters.length > 0) {
+          const regionalOutage = data.outageFilters.find(filter => filter.type === 'REGION');
+          regionStatus[regionalOutage.regionName] = data.state;
+        }
+        pollOutageStatus();
+      }
+    } catch (e) {
+      console.log(`Initiating regional outage failed: ${e}`)
+    }
+  }
+
+  async function endRegionalOutage(regionName) {
+    try {
+      const resp = await fetch(appServerEndpoint + '/endRegionalOutage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.outageFilters && data.outageFilters.length > 0) {
+          const regionalOutage = data.outageFilters.find(filter => filter.type === 'REGION');
+          regionStatus[regionalOutage.regionName] = data.state;
+        }
+      }
+      pollOutageStatus();
+    } catch (e) {
+      console.log(`Ending regional outage failed: ${e}`)
+    }
+  }
+
+  async function getRegionalOutageStatus() {
+    try {
+      const resp = await fetch(appServerEndpoint + '/getRegionalOutageStatus');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.outageFilters && data.outageFilters.length > 0) {
+          if (data.state === 'SIMULATING' || data.state === 'COMPLETE') {
+            clearInterval(pollInterval);
+          }
+          if (data.state === 'COMPLETE') {
+            regionStatus = {};
+          } else {
+            const regionalOutage = data.outageFilters.find(filter => filter.type === 'REGION');
+            if (Object.keys(regionStatus).length === 0 || (regionalOutage && regionStatus[regionalOutage.regionName] !== data.state)) {
+              regionStatus[regionalOutage.regionName] = data.state;
+              // addEvent(`Region ${regionalOutage.regionName} status changed to ${data.state}`);
+            }
+          }
+        } else {
+          regionStatus = {};
+        }
+      }
+    } catch (e) {
+      console.log(`Failed getting outage simulation status: ${e}`);
+    }
+  }
+
+  async function pollOutageStatus() {
+    pollInterval = setInterval(async () => {
+      await getRegionalOutageStatus();
+    }, 2000);
+  }
 </script>
 
 <!-- can't iterate over a set so need to convert to array -->
 {#each [...regions] as region}
-  <div class="row region align-items-center">
+  <div class="row region align-items-center"
+       class:outage={region in regionStatus && regionStatus[region] === 'SIMULATING'}
+       class:outage-transition={region in regionStatus && (regionStatus[region] === 'STARTING' || regionStatus[region] === 'RECOVERING')}>
       <div class="col-3 region-label">
         {region}
+        {#if region in regionStatus}
+          <span class="status-badge">({regionStatus[region]})</span>
+        {/if}
+        {#if $isRunning && clusterType === 'atlas' && (Object.keys(regionStatus).length === 0 || region in regionStatus)}
+          <div class="context-menu">
+            <i class="bi bi-caret-down-square menu-button"></i>
+            <ul class="menu">
+              {#if Object.keys(regionStatus).length === 0}
+                <li><button on:click="{startRegionalOutage(region)}"><i class="bi bi-lightning-fill"></i> Start regional outage</button></li>
+              {:else}
+                <li><button on:click="{endRegionalOutage(region)}"><i class="bi bi-stop-fill"></i> End regional outage</button></li>
+              {/if}
+            </ul>
+          </div>
+        {/if}
       </div>
     {#each nodes.filter(node => node.region === region) as node (node.host)}
       <div class="col-{Math.floor(9 / nodes.filter(node => node.region == region).length)}">
@@ -158,5 +252,38 @@
     border-radius: 10px;
     margin-bottom: 25px;
     padding-top: 10px;
+  }
+
+  .outage {
+    background-color: #fbb;
+  }
+
+  .outage-transition {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% {
+      background-color: #fbb;
+    }
+    51%, 100% {
+      background-color: #eee;
+    }
+  }
+
+  .status-badge {
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  .context-menu {
+    position: absolute;
+    left: 10px;
+    top: -24px;
+    right: auto;
+  }
+
+  .context-menu li {
+    min-width: 275px;
   }
 </style>

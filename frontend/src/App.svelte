@@ -11,8 +11,7 @@
 	import SlowFailedQueryLog from './SlowFailedQueryLog.svelte';
 	import Stats from './Stats.svelte';
 	
-	// global variable DSIM_APP_HOST is set in frontend/public/index.html
-	const appServerEndpoint = DSIM_APP_HOST;
+	const appServerEndpoint = "http://localhost:8080";
 	let mongoNodes = [];
 	let isRunningVal;
 	let startDate;

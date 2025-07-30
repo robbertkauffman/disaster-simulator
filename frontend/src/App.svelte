@@ -46,7 +46,7 @@
 	<div class="container">
 		<div class="row header-row">
 			<div class="col text-center">
-				<h1>Disaster Simulator&reg;</h1>
+				<h1>Disaster Simulator</h1>
 			</div>
 		</div>
 		<div class="row">

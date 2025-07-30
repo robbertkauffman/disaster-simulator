@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-  import { isRunning } from './store';
+  import { alertMsg, isRunning } from './store';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
@@ -31,7 +31,9 @@
         console.log(`Cluster type is ${clusterType}`);
       }
     } catch (e) {
-      console.log(`Failed getting cluster type: ${e}`);
+      const errorMsg = `Failed getting cluster type: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
   }
 
@@ -71,7 +73,9 @@
         }
       }
     } catch(e) {
-      console.log(`Fetching cluster config failed: ${e}`);
+      const errorMsg = `Fetching cluster config failed: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
 	}
 
@@ -102,7 +106,7 @@
           nodes[idx].type = type;
           nodes[idx].isChangingState = false;
         } else {
-          console.log(`Couldn't find node ${updatedNode.address} in rs.config for update`);
+          console.warn(`Couldn't find node ${updatedNode.address} in rs.config for update`);
         }
       }
     });
@@ -149,9 +153,15 @@
           regionStatus[regionalOutage.regionName] = data.state;
         }
         pollOutageStatus();
+      } else {
+        const errorMsg = `Error while starting regional outage: ${await resp.text()}`;
+        alertMsg.set(errorMsg);
+        console.error(errorMsg);
       }
     } catch (e) {
-      console.log(`Initiating regional outage failed: ${e}`)
+      const errorMsg = `Initiating regional outage failed: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
   }
 
@@ -167,10 +177,16 @@
           const regionalOutage = data.outageFilters.find(filter => filter.type === 'REGION');
           regionStatus[regionalOutage.regionName] = data.state;
         }
+      } else {
+        const errorMsg = `Error while ending regional outage: ${await resp.text()}`;
+        alertMsg.set(errorMsg);
+        console.error(errorMsg);
       }
       pollOutageStatus();
     } catch (e) {
-      console.log(`Ending regional outage failed: ${e}`)
+      const errorMsg = `Ending regional outage failed: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
   }
 
@@ -195,9 +211,19 @@
         } else {
           regionStatus = {};
         }
+      } else if (resp.status === 404) {
+        // no outage simulation in progress, so no need to throw any errors
+        regionStatus = {};
+      } else {
+        regionStatus = {};
+        const errorMsg = `Error while getting regional outage status: ${await resp.text()}`;
+        alertMsg.set(errorMsg);
+        console.error(errorMsg);
       }
     } catch (e) {
-      console.log(`Failed getting outage simulation status: ${e}`);
+      const errorMsg = `Failed getting outage simulation status: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
   }
 

@@ -1,5 +1,5 @@
 <script>
-  import { isRunning } from './store.js';
+  import { alertMsg, isRunning } from './store.js';
 
   export let appServerEndpoint;
   export let retryReads;
@@ -47,10 +47,14 @@
       if (resp.ok && data) {
         console.log(`${data}`);
       } else {
-        console.log(`Error! Got invalid response: ${data}`);
+        const errorMsg = `Error! Got invalid response: ${data}`;
+        alertMsg.set(errorMsg);
+        console.error(errorMsg);
       }
     } catch(e) {
-      console.log(`Error while starting appserver: ${e}`);
+      const errorMsg = `Error while starting appserver: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     };
   }
 
@@ -61,10 +65,14 @@
       if (resp.ok && data) {
         console.log('Stopping');
       } else {
-        console.log(`Error! Got invalid response: ${data}`);
+        const errorMsg = `Error! Got invalid response: ${data}`;
+        alertMsg.set(errorMsg);
+        console.error(errorMsg);
       }
     } catch(e) {
-      console.log(`Error while stopping appserver: ${e}`);
+      const errorMsg = `Error while stopping appserver: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     };
   }
 </script>

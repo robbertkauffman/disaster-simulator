@@ -1,6 +1,6 @@
 <script>
   import { fade } from 'svelte/transition';
-  import { isRunning } from './store';
+  import { alertMsg, isRunning } from './store';
 
   export let clusterType;
   export let type;
@@ -58,7 +58,9 @@
         return true;
       }
     } catch (e) {
-      console.log(`${apiPath} failed: ${e}`)
+      const errorMsg = `Error while calling ${apiPath}: ${e}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
     return false;
   }
@@ -134,11 +136,11 @@
   {/if}
   {#if $isRunning && state}
     {#if state !== goalState}
-      <p class="node-state">{state}...</p>
+      <div class="alert alert-info node-state" role="alert">{state}...</div>
     {:else}
-      <p class="node-state" out:fade="{{delay: 5000, duration: 5000}}">{state}</p>
+      <div class="alert alert-info node-state" out:fade="{{delay: 5000, duration: 5000}}">{state}</div>
     {/if}
-  {/if}
+    {/if}
 </div>
 
 <style>
@@ -199,11 +201,9 @@
   .node-state {
     position: absolute;
     z-index: 9999;
-    text-shadow:   
-        0 0 5px #ffffff,  
-        0 0 10px #ffffff,  
-        0 0 20px #ffffff,  
-        0 0 40px #ffffff,  
-        0 0 80px #ffffff;  
+    opacity: 0.85;
+    left: 50px;
+    top: -13px;
+    width: 150px;
   }
 </style>

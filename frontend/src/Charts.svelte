@@ -2,6 +2,7 @@
   import Chart from 'chart.js/auto';
   import 'chartjs-adapter-luxon';
   import { onMount } from 'svelte';
+  import { alertMsg } from './store';
 
   export let socket;
 
@@ -98,7 +99,9 @@
       }
       chart.update();
     } else {
-      console.log(`Error while adding data to chart: no dataset defined for operation type: ${operationType}`);
+      const errorMsg = `Error while adding data to chart: no dataset defined for operation type: ${request.operation}`;
+      alertMsg.set(errorMsg);
+      console.error(errorMsg);
     }
   }
 </script>

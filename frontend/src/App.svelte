@@ -1,7 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
-	import { isRunning } from './store.js';
+	import { alertMsg, isRunning } from './store.js';
 	import { io } from "socket.io-client";
+	import Alert from './Alert.svelte';
 	import AppServer from './AppServer.svelte';
 	import Charts from './Charts.svelte';
 	import Controls from './Controls.svelte';
@@ -24,7 +25,9 @@
 	function connectWs() {
 		socket = io(appServerEndpoint);
 		socket.io.on('error', (error) => {
-			console.log(`socket error: ${error}`);
+			const errorMsg = `Websockets error: ${error}`
+			alertMsg.set(errorMsg);
+			console.error(errorMsg);
 		});
 	}
 
@@ -53,6 +56,7 @@
 			</div>
 			<div class="col-10 topology">
 				<div class="row justify-content-center appserver-row">
+					<Alert/>
 					<AppServer mongoNodes={mongoNodes}/>
 				</div>
 				<div class="row justify-content-center">
@@ -93,7 +97,8 @@
 
 	.appserver-row {
 		min-height: 85px;
-		margin-bottom: 100px;
+		margin-bottom: 25px;
+		position: relative;
 	}
 
 	.logs-row {

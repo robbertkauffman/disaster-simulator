@@ -1,9 +1,9 @@
 const Docker = require('dockerode');
 const { addEvent, printWithTimestamp } = require('./common');
 
-const dockerSocketPath = process.env.DOCKER_HOST || '/Users/robbert.kauffman/.local/share/containers/podman/machine/podman-machine-default/podman.sock';
+const dockerSocketPath = process.env.DOCKER_SOCK;
 const dockerClient = new Docker({socketPath: dockerSocketPath});
-const CONTAINER_NETWORK_NAME = 'containers_mongoCluster';
+const CONTAINER_NETWORK_NAME = 'disaster-simulator_mongoCluster';
 
 module.exports = function(app, io, mongoClient) {
   app.post('/stepDown', async (req, res) => {

@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-  import { alertMsg, isRunning } from './store';
+  import { alertMsg, clusterEventMsg, isRunning } from './store';
   import MongoNode from './MongoNode.svelte';
 
   export let appServerEndpoint;
@@ -66,6 +66,9 @@
             if (node.tags && node.tags.region) {
               newNode.region = node.tags.region,
               regions.add(node.tags.region);
+            } else {
+              newNode.region = "Local",
+              regions.add('Local');
             }
 
             nodes = [...nodes, newNode];
@@ -165,7 +168,7 @@
     }
   }
 
-  async function endRegionalOutage(regionName) {
+  async function endRegionalOutage() {
     try {
       const resp = await fetch(appServerEndpoint + '/endRegionalOutage', {
         method: 'POST',
@@ -205,7 +208,7 @@
             const regionalOutage = data.outageFilters.find(filter => filter.type === 'REGION');
             if (Object.keys(regionStatus).length === 0 || (regionalOutage && regionStatus[regionalOutage.regionName] !== data.state)) {
               regionStatus[regionalOutage.regionName] = data.state;
-              // addEvent(`Region ${regionalOutage.regionName} status changed to ${data.state}`);
+              clusterEventMsg.set(`Region ${regionalOutage.regionName} status changed to ${data.state}`);
             }
           }
         } else {
@@ -239,12 +242,13 @@
   <div class="row region align-items-center"
        class:outage={region in regionStatus && regionStatus[region] === 'SIMULATING'}
        class:outage-transition={region in regionStatus && (regionStatus[region] === 'STARTING' || regionStatus[region] === 'RECOVERING')}>
+    {#if clusterType === 'atlas'}
       <div class="col-3 region-label">
         {region}
         {#if region in regionStatus}
           <span class="status-badge">({regionStatus[region]})</span>
         {/if}
-        {#if $isRunning && clusterType === 'atlas' && (Object.keys(regionStatus).length === 0 || region in regionStatus)}
+        {#if $isRunning && (Object.keys(regionStatus).length === 0 || region in regionStatus)}
           <div class="context-menu">
             <i class="bi bi-caret-down-square menu-button"></i>
             <ul class="menu">
@@ -257,6 +261,9 @@
           </div>
         {/if}
       </div>
+    {:else}
+      <div class="col-3 region-label"/>
+    {/if}
     {#each nodes.filter(node => node.region === region) as node (node.host)}
       <div class="col-{Math.floor(9 / nodes.filter(node => node.region == region).length)}">
         <MongoNode name={node.host.split(':')[0]} type={node.type}

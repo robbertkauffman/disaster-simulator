@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { getTimestamp } from './common.js'
+  import { clusterEventMsg } from './store';
 
   export let socket;
 
@@ -8,6 +9,16 @@
 
   onMount(() => {
     listenForEvents();
+  });
+  
+  clusterEventMsg.subscribe(value => {
+    if (value !== '') {
+      addEvent({
+        message: value,
+        date: new Date()
+      });
+    }
+    clusterEventMsg.set('');
   });
 
   function listenForEvents() {

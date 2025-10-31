@@ -1,0 +1,77 @@
+services:
+  mongo1:
+    hostname: mongo1
+    image: mongo
+    container_name: mongo1
+    networks:
+      - mongoCluster
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 1s
+      retries: 10
+    command: mongod --replSet rs0 --bind_ip localhost,mongo1
+  mongo2:
+    hostname: mongo2
+    image: mongo
+    container_name: mongo2
+    networks:
+      - mongoCluster
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 1s
+      retries: 10
+    command: mongod --replSet rs0 --bind_ip localhost,mongo2
+  mongo3:
+    hostname: mongo3
+    image: mongo
+    container_name: mongo3
+    networks:
+      - mongoCluster
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 })'"]
+      interval: 1s
+      retries: 10
+    command: mongod --replSet rs0 --bind_ip localhost,mongo3
+  mongoinit:
+    image: mongo
+    networks:
+      - mongoCluster
+    depends_on:
+      mongo1:
+        condition: service_healthy
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
+    command: >
+      mongosh mongo1:27017 --eval
+      '
+      rs.initiate({
+        _id: "rs0",
+        members: [  
+          {_id: 0, host: "mongo1:27017"},
+          {_id: 1, host: "mongo2:27017"},
+          {_id: 2, host: "mongo3:27017"}
+        ]
+      })'
+  disaster-simulator:
+    image: node
+    container_name: disaster-simulator
+    ports:
+      - 8080:8080
+    networks:
+      - mongoCluster
+    restart: on-failure
+    depends_on:
+      mongoinit:
+        condition: service_completed_successfully
+    volumes:
+      - ./:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /app
+    command: /bin/sh -c "npm install && npm run dev"
+networks:
+  mongoCluster: {}

@@ -7,18 +7,23 @@ The Disaster Simulator is a demo to show the impact of database failovers to the
 
 ## Requirements
 - Atlas cluster
-- Python 3.x
-- Node.js & npm
+- Node.js & NPM
 
 ## Instructions
-### Atlas
+The demo can be run either with an Atlas cluster or a local MongoDB cluster running in a Docker/Podman container. When you use the former, you'll have to use Atlas' Test Failover and Simulate Regional Outage functionality to trigger a failover. When using a local MongoDB cluster, you can trigger failovers by killing, stopping, restarting or disconnecting nodes.
+
+### Option A: Atlas
 1. Create an Atlas cluster that will be used for testing failovers. Note that only dedicated clusters (M10+) support the Test Failover and Simulate Regional Outage functionality.
 2. Create a database user with the role *Read and write to any database*
 3. Add the public IP address(es) of the machine(s) that will be running the back-end to the [IP Access List](https://www.mongodb.com/docs/atlas/security/ip-access-list/) of your Atlas Project, or *Allow access from anywhere*.
 4. [Create a Project API key](https://www.mongodb.com/docs/atlas/configure-api-access/#grant-programmatic-access-to-an-organization) with the *Project Cluster Manager* role. And add the public IP address(es) of the machine(s) that will be running the back-end to the IP Access List of the API key.
 
+### Option B: Local MongoDB Container
+1. Run `docker compose up` to start the MongoDB cluster.
+2. Verify there are no errors in the logs, and the cluster is up and running via `mongosh localhost:27017`.
+
 ### Application
-1. Copy or rename `backend/.env.example` to `backend/.env` and adjust the connection string, Atlas group ID, cluster name and API keys.
+1. Copy or rename `backend/.env.example` to `backend/.env` and adjust the connection string, Atlas group ID, cluster name and API keys. Note that only the connection string is required when using a local MongoDB cluster.
 2. Install dependencies:
   ```shell
   npm install

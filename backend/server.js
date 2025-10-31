@@ -13,7 +13,7 @@ const { MongoClient } = require('mongodb');
 const childProc = require("child_process");
 const { addEvent, generateInsertDoc, printWithTimestamp } = require('./common');
 
-// when changing the port, make sure to update the port in DSIM_APP_HOST in frontend/public/index.html
+// when changing the port, make sure to update the port using the variable *appServerEndpoint* in `frontend/src/App.svelte`
 const APP_PORT = process.env.PORT || 8080;
 const QUERY_DB = 'sample_training';
 const QUERY_COLLECTION = 'grades';

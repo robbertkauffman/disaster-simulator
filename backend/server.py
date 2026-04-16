@@ -14,13 +14,13 @@ import time
 
 
 # Change these:
-CONNECTION_STRING = 'mongodb+srv://USERNAME:PASSWORD@CLUSTERNAME.PROJECTHASH.mongodb.net/myFirstDatabase'
-ATLAS_GROUP_ID = "5beae24579358e0ae95492af"
-ATLAS_CLUSTER_NAME = "MyCluster"
-ATLAS_API_KEY_PUBLIC = "gzxzjpup"
-ATLAS_API_KEY_PRIVATE = "bb07cb94-17e4-40f8-9131-d76359197aa3"
-QUERY_DB = 'sample_restaurants'
-QUERY_COLLECTION = 'restaurants'
+CONNECTION_STRING = os.getenv('CONNECTION_STRING', 'mongodb://127.0.0.1:27017/?replicaSet=rs0')
+ATLAS_GROUP_ID = os.getenv('ATLAS_GROUP_ID', "5beae24579358e0ae95492af")
+ATLAS_CLUSTER_NAME = os.getenv('ATLAS_CLUSTER_NAME', "MyCluster")
+ATLAS_API_KEY_PUBLIC = os.getenv('ATLAS_API_KEY_PUBLIC', "gzxzjpup")
+ATLAS_API_KEY_PRIVATE = os.getenv('ATLAS_API_KEY_PRIVATE', "bb07cb94-17e4-40f8-9131-d76359197aa3")
+QUERY_DB = os.getenv('QUERY_DB', 'sample_restaurants')
+QUERY_COLLECTION = os.getenv('QUERY_COLLECTION', 'restaurants')
 # Do not change these:
 APP_PORT = 5001
 ATLAS_API_HOSTNAME_PATH = f'https://cloud.mongodb.com/api/atlas/v1.0/groups/{ATLAS_GROUP_ID}'

@@ -9,6 +9,10 @@
 	});
 
   async function createDashboard() {
+    if (!DR_CHART_BASE_URL || !Array.isArray(DR_CHART_IDS) || DR_CHART_IDS.length === 0) {
+      return;
+    }
+
     const sdk = new ChartsEmbedSDK({
       baseUrl: DR_CHART_BASE_URL
     });

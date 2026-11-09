@@ -48,7 +48,7 @@ The Disaster Simulator is a demo to show the impact of database failovers to the
   cd frontend/public
   python3 -m http.server 8080
   ```
-5. Access the front-end in your browser via the URL: *http://localhost:8080*
+5. Open the front-end in your browser at *http://localhost:8080*
 
 ### (Optional): Building the front-end
 The front-end is built in [Svelte](https://svelte.dev/). In case you want to make changes to the front-end, you can build it as follows:

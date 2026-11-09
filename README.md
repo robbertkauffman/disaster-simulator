@@ -1,7 +1,7 @@
 # Disaster Simulator
 MongoDB has an excellent and fast failover process compared to other databases, thanks to its distributed and modern architecture. And with retryable reads & writes the impact of a failover to the application is kept to a minimum. Demonstrating the failover speed is easy using the [Test Failover](https://www.mongodb.com/docs/atlas/tutorial/test-failover/) functionality of Atlas. However, it is a bit more tricky to show the impact of a failover to the application, and more precisely how the operation latency increases or operations fail depending on whether retryable reads & writes are used.
 
-The Disaster Simulator is a demo to show the impact of database failovers to the application, specifically the operation latency and success/failure of operations (in case retryable reads & writes are disabled).
+The Disaster Simulator is a demo to show the impact of database failovers on the application, specifically the operation latency and success/failure of operations (in case retryable reads & writes are disabled).
 
 ![Screenshot of Disaster Simulator](/screenshot.png)
 
